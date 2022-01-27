@@ -1,0 +1,287 @@
+﻿@page "/new"
+@model Codepedia.Pages.snippetEditModel
+@{
+}
+@section HEAD
+{
+    <style>
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+.urlDiv:focus
+{
+    outline: 0.5px solid rgb(118, 118, 118);
+}
+</style>
+}
+<input style="width:100%;height:2em" /><br /><br />
+<form method=POST>
+<input style="width:calc(100% - 25em);height:2em;float:left" name=entryName value="@Model.commit?.Name" />
+<div class=urlDiv style="border:0.5px solid rgb(118, 118, 118);width:20em;float:right"><label><b style="cursor:text">codepedia.com/</b><input style="outline:none;border:none;margin:0px;padding:0px" name="slug" value="@Model.commit?.Slug" /></label></div>
+<br /><br />
+<div class="tab">
+  <button type=button class="tablinks" onclick="openTab(this, 'Edit')" id=editBtn>Edit</button>
+  <button type=button class="tablinks" onclick="openTab(this, 'Preview')">Preview</button>
+</div>
+<div id="Edit" class="tabcontent">
+    <textarea style="tab-size:4;font-family:SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;width:100%;height:30em" name=markdown id=editBox>@Model.commit?.Markdown</textarea>
+</div>
+
+<div id="Preview" class="tabcontent">
+    
+</div>
+<input name="CommitID" type="hidden" value="@Model.commit?.Id" />
+<button>@(Model.commit == null ? "Create" : "Save Changes")</button>
+</form>
+<script>
+{
+	var enabled = true;
+	editBox.onkeydown = function(e) {
+		const selectionDirection = (() =>
+		{
+			if (this.selectionStart === this.selectionEnd) return 0;
+			var sel = getSelection(),
+			  position = sel.anchorNode.compareDocumentPosition(sel.focusNode),
+			  backward = false;
+			// position == 0 if nodes are the same
+			if (!position && sel.anchorOffset > sel.focusOffset || 
+			  position === Node.DOCUMENT_POSITION_PRECEDING)
+			  backward = true;
+			return backward ? -1 : 1;
+		})();
+		let moving = selectionDirection === 1 ?
+			(v => v ? this.selectionEnd = v : this.selectionEnd) :
+			(v => v ? this.selectionStart = v : this.selectionStart);
+		let increment = () => {
+			if (moving() < this.value.length)
+			{
+				moving(moving() + 1);
+				return true;
+			}
+			else return false;
+		};
+		let decrement = () => {
+			if (moving() > 0)
+			{
+				moving(moving() - 1);
+				return true;
+			}
+			else return false;
+		};
+		let char = () => this.value[moving() - (moving() === -1 ? 1 : 0)];
+		if (!e.shiftKey && this.selectionStart !== this.selectionEnd)
+			return true;
+		// Left
+		else if (e.keyCode === 37 && enabled)
+		{
+			if (moving() === 0 || char() !== ' ')
+				return true;
+			let n = 0;
+			while (char() === ' ' && n++ < 4 && char() === ' ' && decrement());
+			return false;
+		}
+		// Right
+		else if (e.keyCode === 39 && enabled)
+		{
+			if (this.selectionStart === this.value.length || char() !== ' ')
+				return true;
+			let n = 0;
+			while (char() === ' ' && n++ < 4 && char() === ' ' && increment());
+			return false;
+		}
+		// Backspace
+		else if (e.keyCode === '\b'.charCodeAt(0) && enabled)
+		{
+			if (this.selectionStart === 0 || this.value[this.selectionStart - 1] !== ' ')
+				return true;
+			for (let n = 0; n < 4 && this.selectionStart > 0 && this.value[this.selectionStart-1] === ' '; n++)
+			{
+				document.execCommand('delete');
+			}
+			return false;
+		}
+		// Del
+		else if (e.keyCode === 46)
+		{
+			if (this.selectionStart === this.value.length || this.value[this.selectionStart] !== ' ')
+				return true;
+			for (let n = 0; n < 4 && this.selectionEnd < this.value.length && this.value[this.selectionStart] === ' '; n++)
+			{
+				document.execCommand('forwardDelete');
+			}
+			return false;
+		}
+		// Enter Key?
+		else if (e.keyCode === 13 && enabled)
+		{
+			// selection?
+			if (this.selectionStart == this.selectionEnd)
+			{
+				// find start of the current line
+				var sel = this.selectionStart;
+				var text = $(this).val();
+				while (sel > 0 && text[sel-1] != '\n')
+				sel--;
+
+				var lineStart = sel;
+				while (text[sel] == ' ' || text[sel]=='\t')
+				sel++;
+
+				if (sel > lineStart)
+				{
+					// Insert carriage return and indented text
+					document.execCommand('insertText', false, "\n" + text.substr(lineStart, sel-lineStart));
+
+					// Scroll caret visible
+					this.blur();
+					this.focus();
+					return false;
+				}
+			}
+		}
+
+		// Tab key?
+		if(e.keyCode === 9 && enabled) 
+		{
+			// selection?
+			if (this.selectionStart == this.selectionEnd)
+			{
+				// These single character operations are undoable
+				if (!e.shiftKey)
+				{
+					document.execCommand('insertText', false, "\t");
+				}
+				else
+				{
+					var text = this.value;
+					if (this.selectionStart > 0 && text[this.selectionStart-1]=='\t')
+					{
+						document.execCommand('delete');
+					}
+				}
+			}
+			else
+			{
+				// Block indent/unindent trashes undo stack.
+				// Select whole lines
+				var selStart = this.selectionStart;
+				var selEnd = this.selectionEnd;
+				var text = $(this).val();
+				while (selStart > 0 && text[selStart-1] != '\n')
+					selStart--;
+				while (selEnd > 0 && text[selEnd-1]!='\n' && selEnd < text.length)
+					selEnd++;
+
+				// Get selected text
+				var lines = text.substr(selStart, selEnd - selStart).split('\n');
+
+				// Insert tabs
+				for (var i=0; i<lines.length; i++)
+				{
+					// Don't indent last line if cursor at start of line
+					if (i==lines.length-1 && lines[i].length==0)
+						continue;
+
+					// Tab or Shift+Tab?
+					if (e.shiftKey)
+					{
+						if (lines[i].startsWith('\t'))
+							lines[i] = lines[i].substr(1);
+						else if (lines[i].startsWith("    "))
+							lines[i] = lines[i].substr(4);
+					}
+					else
+						lines[i] = "\t" + lines[i];
+				}
+				lines = lines.join('\n');
+
+				// Update the text area
+				this.value = text.substr(0, selStart) + lines + text.substr(selEnd);
+				this.selectionStart = selStart;
+				this.selectionEnd = selStart + lines.length; 
+			}
+
+			return false;
+		}
+
+		enabled = true;
+		return true;
+	};
+}
+//editBox.addEventListener('keydown', function(e) {
+//if (e.key === 'Tab') {
+//e.preventDefault();
+//var start = this.selectionStart;
+//var end = this.selectionEnd;
+
+//// set textarea value to: text before caret + tab + text after caret
+//this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+
+//// put caret at right position again
+//this.selectionStart =
+//    this.selectionEnd = start + 1;
+//}
+//});
+async function openTab(elem, tabName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabName).style.display = "block";
+  (elem ?? editBtn).className += " active";
+  if (tabName === 'Preview')
+  {
+      Preview.innerHTML = 'Loading...';
+      for (let n = 0; n < 5; n++)
+      {
+          try
+          {
+              Preview.innerHTML = await (await fetch('/api/markdown?' + new URLSearchParams({markdown: editBox.value}))).text();
+              break;
+          }
+          catch (e)
+          {
+
+          }
+      }
+  }
+}
+openTab(undefined, "Edit");
+</script>

@@ -1,0 +1,20 @@
+﻿@page
+@model Codepedia.Pages.sign_inModel
+@{
+}
+@section HEAD
+{
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="129144355612-kd63kqitjapt8eudcs4dajp54vjp8plg.apps.googleusercontent.com">
+    <script>
+function onSignIn(googleUser) {
+  let id_token = googleUser.getAuthResponse().id_token;
+  idTokenI.value = id_token;
+  googleSignInForm.submit();
+}
+    </script>
+}
+<form id=googleSignInForm style="display:none" method="GET" action="/google-sign-in">
+    <input id=idTokenI name="id_token" type="hidden" />
+</form>
+<div class="g-signin2" data-onsuccess="onSignIn"></div>

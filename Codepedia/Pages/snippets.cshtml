@@ -1,0 +1,6 @@
+﻿@page
+@model Codepedia.Pages.snippetsModel
+@foreach (var (entry, commit) in Model.Entries)
+{
+    <h2><a href="/@commit.Slug">@commit.Name</a></h2>
+}

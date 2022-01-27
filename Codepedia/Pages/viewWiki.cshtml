@@ -1,0 +1,85 @@
+﻿@page "/{slug}"
+@using static Codepedia.Functions
+@model Codepedia.Pages.viewWikiModel
+@section HEAD
+{
+    <style>
+    div[data-lang]
+    {
+        display: none;
+    }
+    pre
+    {
+        background-color: #fcfcfc;
+        /*max-height: 600px;*/
+        display:inline-block;
+        padding-right: 20px;
+    }
+    </style>
+    <script>
+function changeURL (newURL)
+{
+	history.replaceState({}, '', newURL);
+}
+function swap(json){
+  var ret = {};
+  for(var key in json){
+    ret[json[key]] = key;
+  }
+  return ret;
+}
+    </script>
+}
+<div style="margin-left: 20%; margin-right: -20%">
+<h1><span id=codeName>@Model.Commit.Name</span> [<a href="/@Model.Commit.Slug/edit">Edit</a>]</h1>
+@if (/*user is admin*/true)
+{
+    
+}
+<div id="langSelectorSlot"></div>
+@Html.Raw(DisplayMarkdown(Model.Commit.Markdown))
+</div>
+<script>
+function toLangName (lang)
+{
+    return lang[0].toUpperCase() + lang.substr(1);
+}
+let allLangs = Array.from(document.querySelectorAll('div[data-lang]'));
+if (allLangs.length === 1)
+{
+    codeName.innerText += ' (' + toLangName(allLangs[0].getAttribute('data-lang')) + ')';
+    allLangs[0].style.display = 'block';
+}
+else if (allLangs.length > 0)
+{
+    let langSelector = langSelectorSlot.appendChild(document.createElement('select'));
+    langSelector.appendChild(document.createElement('option'));
+    for (let langDiv of allLangs)
+    {
+        let lang = langDiv.getAttribute('data-lang');
+        langSelector.appendChild(Object.assign(document.createElement('option'), {
+            value: lang,
+            innerText: toLangName(lang)
+        }));
+    }
+    langSelector.value = '';
+    const langNames = {
+        'c#': 'csharp'
+    };
+    const langNamesReversed = swap(langNames);
+    langSelector.oninput = e =>
+    {
+        for (let langD of document.querySelectorAll('div[data-lang]'))
+            langD.style.display = 'none';
+        for (let langD of document.querySelectorAll(`div[data-lang='${langSelector.value}']`))
+            langD.style.display = 'block';
+        changeURL('?' + (langNames[langSelector.value] ?? langSelector.value));
+    };
+    if (location.search.length > 1)
+    {
+        const l = location.search.substr(1);
+        langSelector.value = langNamesReversed[l] ?? l;
+        langSelector.oninput();
+    }
+}
+</script>
