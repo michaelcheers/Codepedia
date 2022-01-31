@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="ColorCode.Core" Version="2.0.13" />
     <PackageReference Include="ColorCode.HTML" Version="2.0.13" />
+    <PackageReference Include="CryptSharp.Core" Version="2.0.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.55.0" />
     <PackageReference Include="Google.Apis.Iam.v1" Version="1.55.0.2561" />
     <PackageReference Include="MarkDig" Version="0.26.0" />

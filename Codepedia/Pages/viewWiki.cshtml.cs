@@ -21,6 +21,7 @@ namespace Codepedia.Pages
                 select c.Entry.WikiCommits.OrderByDescending(c => c.TimeCreated).FirstOrDefault()
             ).FirstOrDefault();
             if (commit == null) return NotFound();
+            if (slug != commit.Slug) return RedirectPermanent($"/{commit.Slug}");
             Commit = commit;
             return Page();
         }

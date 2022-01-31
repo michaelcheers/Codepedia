@@ -20,11 +20,15 @@ namespace Codepedia.DB
         public string Words { get; set; }
         public int SuggestedBy { get; set; }
         public int ApprovedBy { get; set; }
+        public int? WikiPostSuggestionId { get; set; }
+        public int? WikiSuggestionId { get; set; }
         public DateTime TimeCreated { get; set; }
 
         public virtual User ApprovedByNavigation { get; set; }
         public virtual WikiEntry Entry { get; set; }
         public virtual User SuggestedByNavigation { get; set; }
+        public virtual WikiPostSuggestion WikiPostSuggestion { get; set; }
+        public virtual WikiSuggestion WikiSuggestion { get; set; }
         public virtual ICollection<WikiSuggestion> WikiSuggestions { get; set; }
     }
 }

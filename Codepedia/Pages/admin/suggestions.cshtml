@@ -1,0 +1,32 @@
+﻿@page
+@using Codepedia.DB
+@model Codepedia.Pages.admin.suggestionsModel
+
+<h1>Post Suggestions</h1>
+<table>
+    <tr>
+        <th>Suggested By</th>
+        <th>Post Name</th>
+    </tr>
+    @foreach ((WikiPostSuggestion suggestion, User suggestedBy) in Model.SuggestedPosts)
+    {
+        <tr>
+            <td>@suggestedBy.DisplayName</td>
+            <td><a href="/suggestedPosts/@suggestion.Id">@suggestion.Name</a></td>
+        </tr>
+    }
+</table>
+<h1>Suggested Edits</h1>
+<table>
+    <tr>
+        <th>Suggested By</th>
+        <th>Entry Editing</th>
+    </tr>
+    @foreach ((WikiSuggestion suggestion, User suggestedBy, WikiCommit latestVersion) in Model.SuggestedEdits)
+    {
+        <tr>
+            <td>@suggestedBy.DisplayName</td>
+            <td><a href="/suggestedEdits/@suggestion.Id">@latestVersion.Name</a></td>
+        </tr>
+    }
+</table>

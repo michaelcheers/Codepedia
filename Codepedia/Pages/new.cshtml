@@ -1,6 +1,8 @@
 ﻿@page "/new"
 @model Codepedia.Pages.snippetEditModel
 @{
+	if (Model.compareTo != null)
+		ViewData["full-width"] = true;
 }
 @section HEAD
 {
@@ -48,22 +50,50 @@
 }
 <input style="width:100%;height:2em" /><br /><br />
 <form method=POST>
-<input style="width:calc(100% - 25em);height:2em;float:left" name=entryName value="@Model.commit?.Name" />
-<div class=urlDiv style="border:0.5px solid rgb(118, 118, 118);width:20em;float:right"><label><b style="cursor:text">codepedia.com/</b><input style="outline:none;border:none;margin:0px;padding:0px" name="slug" value="@Model.commit?.Slug" /></label></div>
-<br /><br />
-<div class="tab">
-  <button type=button class="tablinks" onclick="openTab(this, 'Edit')" id=editBtn>Edit</button>
-  <button type=button class="tablinks" onclick="openTab(this, 'Preview')">Preview</button>
-</div>
-<div id="Edit" class="tabcontent">
-    <textarea style="tab-size:4;font-family:SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;width:100%;height:30em" name=markdown id=editBox>@Model.commit?.Markdown</textarea>
-</div>
+@if (Model.compareTo != null)
+{
+	@Html.Raw("<div class=\"row\">")
+	<div id=tabs0 class="col-md-6" style="border-right:1px solid black">
+		<h1 style="text-align:center; text-decoration: underline">Current Version</h1>
+		<input style="width:calc(100% - 25em);height:2em;float:left" disabled value="@Model.compareTo?.Name" />
+		<div class=urlDiv style="border:0.5px solid rgb(118, 118, 118);width:20em;float:right"><label><b style="cursor:text">codepedia.com/</b><input style="outline:none;border:none;margin:0px;padding:0px" disabled value="@Model.compareTo?.Slug" /></label></div>
+		<br /><br />
+		<div class="tab">
+		  <button type=button class="tablinks" onclick="openTab0(this, 'Edit0')" id=editBtn0>Edit</button>
+		  <button type=button class="tablinks" onclick="openTab0(this, 'Preview0')">Preview</button>
+		</div>
+		<div id="Edit0" class="tabcontent">
+			<textarea disabled style="tab-size:4;font-family:SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;width:100%;height:30em" id=editBox0>@Model.compareTo?.Markdown</textarea>
+		</div>
 
-<div id="Preview" class="tabcontent">
+		<div id="Preview0" class="tabcontent">
     
+		</div>
+	</div>
+}
+<div id=tabs1 class="@(Model.compareTo == null ? null : "col-md-6")">
+	@if (Model.compareTo != null) { <h1 style="text-align:center; text-decoration: underline">Proposed Version</h1> }
+	<input style="width:calc(100% - 25em);height:2em;float:left" name=entryName value="@Model.commit?.Name" />
+	<div class=urlDiv style="border:0.5px solid rgb(118, 118, 118);width:20em;float:right"><label><b style="cursor:text">codepedia.com/</b><input style="outline:none;border:none;margin:0px;padding:0px" name="slug" value="@Model.commit?.Slug" /></label></div>
+	<br /><br />
+	<div class="tab">
+	  <button type=button class="tablinks" onclick="openTab(this, 'Edit')" id=editBtn>Edit</button>
+	  <button type=button class="tablinks" onclick="openTab(this, 'Preview')">Preview</button>
+	</div>
+	<div id="Edit" class="tabcontent">
+		<textarea style="tab-size:4;font-family:SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;width:100%;height:30em" name=markdown id=editBox>@Model.commit?.Markdown</textarea>
+	</div>
+
+	<div id="Preview" class="tabcontent">
+    
+	</div>
+	<input name="CommitID" type="hidden" value="@Model.commit?.Id" />
+	<button>@(Model.commit == null ? "Create" : "Save Changes")</button>
 </div>
-<input name="CommitID" type="hidden" value="@Model.commit?.Id" />
-<button>@(Model.commit == null ? "Create" : "Save Changes")</button>
+@if (Model.compareTo != null)
+{
+	@Html.Raw("</div>")
+}
 </form>
 <script>
 {
@@ -104,7 +134,7 @@
 		if (!e.shiftKey && this.selectionStart !== this.selectionEnd)
 			return true;
 		// Left
-		else if (e.keyCode === 37 && enabled)
+		/*else if (e.keyCode === 37 && enabled)
 		{
 			if (moving() === 0 || char() !== ' ')
 				return true;
@@ -142,27 +172,30 @@
 				document.execCommand('forwardDelete');
 			}
 			return false;
-		}
+		}*/
 		// Enter Key?
-		else if (e.keyCode === 13 && enabled)
+		/*else */if (e.keyCode === 13 && enabled)
 		{
 			// selection?
-			if (this.selectionStart == this.selectionEnd)
+			if (this.selectionStart === this.selectionEnd)
 			{
 				// find start of the current line
 				var sel = this.selectionStart;
-				var text = $(this).val();
-				while (sel > 0 && text[sel-1] != '\n')
-				sel--;
+				var text = this.value;
+				let bracket = false;
+				if (sel > 0 && '{(['.includes(text[sel - 1]))
+					bracket = true;
+				while (sel > 0 && text[sel-1] !== '\n')
+					sel--;
 
 				var lineStart = sel;
-				while (text[sel] == ' ' || text[sel]=='\t')
-				sel++;
+				while (text[sel] === ' ' || text[sel] === '\t')
+					sel++;
 
-				if (sel > lineStart)
+				if (sel > lineStart || bracket)
 				{
 					// Insert carriage return and indented text
-					document.execCommand('insertText', false, "\n" + text.substr(lineStart, sel-lineStart));
+					document.execCommand('insertText', false, "\n" + (bracket ? '\t' : '') + text.substr(lineStart, sel-lineStart));
 
 					// Scroll caret visible
 					this.blur();
@@ -173,10 +206,10 @@
 		}
 
 		// Tab key?
-		if(e.keyCode === 9 && enabled) 
+		else if(e.keyCode === 9 && enabled) 
 		{
 			// selection?
-			if (this.selectionStart == this.selectionEnd)
+			if (this.selectionStart === this.selectionEnd)
 			{
 				// These single character operations are undoable
 				if (!e.shiftKey)
@@ -186,7 +219,7 @@
 				else
 				{
 					var text = this.value;
-					if (this.selectionStart > 0 && text[this.selectionStart-1]=='\t')
+					if (this.selectionStart > 0 && text[this.selectionStart-1] === '\t')
 					{
 						document.execCommand('delete');
 					}
@@ -199,9 +232,9 @@
 				var selStart = this.selectionStart;
 				var selEnd = this.selectionEnd;
 				var text = $(this).val();
-				while (selStart > 0 && text[selStart-1] != '\n')
+				while (selStart > 0 && text[selStart-1] !== '\n')
 					selStart--;
-				while (selEnd > 0 && text[selEnd-1]!='\n' && selEnd < text.length)
+				while (selEnd > 0 && text[selEnd-1] !== '\n' && selEnd < text.length)
 					selEnd++;
 
 				// Get selected text
@@ -235,6 +268,22 @@
 
 			return false;
 		}
+		// Home key?
+		else if (e.keyCode === 36 && enabled)
+		{
+			var sel = this.selectionStart;
+			var text = this.value;
+			while (sel > 0 && text[sel-1] !== '\n')
+				sel--;
+			var lineStart = sel;
+			while (text[sel] === ' ' || text[sel] === '\t')
+				sel++;
+			if (sel === this.selectionStart) return true;
+			this.selectionStart = sel;
+			if (!e.shiftKey) this.selectionEnd = sel;
+
+			return false;
+		}
 
 		enabled = true;
 		return true;
@@ -254,13 +303,49 @@
 //    this.selectionEnd = start + 1;
 //}
 //});
+</script>
+@if (Model.compareTo != null)
+{
+<script>
+	async function openTab0(elem, tabName) {
+	  var i, tabcontent, tablinks;
+	  tabcontent = tabs0.getElementsByClassName("tabcontent");
+	  for (i = 0; i < tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+	  }
+	  tablinks = tabs0.getElementsByClassName("tablinks");
+	  for (i = 0; i < tablinks.length; i++) {
+		tablinks[i].className = tablinks[i].className.replace(" active", "");
+	  }
+	  document.getElementById(tabName).style.display = "block";
+	  (elem ?? editBtn0).className += " active";
+	  if (tabName === 'Preview0')
+	  {
+		  Preview0.innerHTML = 'Loading...';
+		  for (let n = 0; n < 5; n++)
+		  {
+			  try
+			  {
+				  Preview0.innerHTML = await (await fetch('/api/markdown?' + new URLSearchParams({markdown: editBox0.value}))).text();
+				  break;
+			  }
+			  catch (e)
+			  {
+
+			  }
+		  }
+	  }
+	}
+	</script>
+}
+<script>
 async function openTab(elem, tabName) {
   var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName("tabcontent");
+  tabcontent = tabs1.getElementsByClassName("tabcontent");
   for (i = 0; i < tabcontent.length; i++) {
     tabcontent[i].style.display = "none";
   }
-  tablinks = document.getElementsByClassName("tablinks");
+  tablinks = tabs1.getElementsByClassName("tablinks");
   for (i = 0; i < tablinks.length; i++) {
     tablinks[i].className = tablinks[i].className.replace(" active", "");
   }
@@ -285,3 +370,9 @@ async function openTab(elem, tabName) {
 }
 openTab(undefined, "Edit");
 </script>
+@if (Model.compareTo != null)
+{
+	<script>
+	openTab0(undefined, "Edit0");
+	</script>
+}

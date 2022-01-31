@@ -26,11 +26,40 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         </li>
                     </ul>
+                    <ul class="navbar-nav">
+                    @if (Context.UserRole() != UserRole.Anonymous)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" title="Manage" href="/user">@User.Identity.Name</a>
+                        </li>
+                        <li class="nav-item">
+                            <form class="form-inline" action="/sign-out" method="get">
+                                <input type="hidden" name=next value="/sign-in?next=@Uri.EscapeDataString(Context.Request.Path)" />
+                                <button type="submit" class="nav-link btn btn-link text-dark">Sign Out</button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <form class="form-inline" action="/sign-in" method="get">
+                                <input type="hidden" name=next value="@Context.Request.Path" />
+                                <button type="submit" class="nav-link btn btn-link text-dark">Register</button>
+                            </form>
+                        </li>
+                        <li class="nav-item">
+                            <form class="form-inline" action="/sign-in" method="get">
+                                <input type="hidden" name=next value="@Context.Request.Path" />
+                                <button type="submit" class="nav-link btn btn-link text-dark">Login</button>
+                            </form>
+                        </li>
+                    }
+                    </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="@(ViewData["full-width"] != null ? "container-fluid" : "container")">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

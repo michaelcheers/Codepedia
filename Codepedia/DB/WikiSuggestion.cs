@@ -18,5 +18,6 @@ namespace Codepedia.DB
 
         public virtual WikiCommit Commit { get; set; }
         public virtual User SuggestedByNavigation { get; set; }
+        public virtual WikiCommit WikiCommit { get; set; }
     }
 }

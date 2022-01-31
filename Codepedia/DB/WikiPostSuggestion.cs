@@ -16,5 +16,6 @@ namespace Codepedia.DB
         public string Status { get; set; }
 
         public virtual User SuggestedByNavigation { get; set; }
+        public virtual WikiCommit WikiCommit { get; set; }
     }
 }

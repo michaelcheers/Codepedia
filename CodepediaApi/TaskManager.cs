@@ -16,8 +16,6 @@ namespace Codepedia
 
         public TaskManager(Func<CancellationToken, Task<T>> initializer) => _initializer = initializer;
 
-        public TaskManager(Func<Task<T>> initializer) : this(_ => initializer()) { }
-
         Task<T>? _task;
         CancellationTokenSource _cancellationToken = new CancellationTokenSource();
 

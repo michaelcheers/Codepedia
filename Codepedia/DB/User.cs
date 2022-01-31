@@ -17,8 +17,11 @@ namespace Codepedia.DB
 
         public int Id { get; set; }
         public string Username { get; set; }
-        public string GoogleUserId { get; set; }
+        public string DisplayName { get; set; }
+        public string Email { get; set; }
         public string Role { get; set; }
+        public string Password { get; set; }
+        public string GoogleUserId { get; set; }
 
         public virtual ICollection<WikiCommit> WikiCommitApprovedByNavigations { get; set; }
         public virtual ICollection<WikiCommit> WikiCommitSuggestedByNavigations { get; set; }

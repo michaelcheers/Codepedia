@@ -16,5 +16,28 @@ function onSignIn(googleUser) {
 }
 <form id=googleSignInForm style="display:none" method="GET" action="/google-sign-in">
     <input id=idTokenI name="id_token" type="hidden" />
+    <input name="next" type="hidden" value="@Request.Query["next"]" />
 </form>
-<div class="g-signin2" data-onsuccess="onSignIn"></div>
+<h1 style="text-align:center;text-decoration:underline">Sign In / Sign Up</h1>
+<div class="row">
+    <div class="col-md-4">
+        <h2 style="text-align:center">Sign In</h2>
+        <form method="POST">
+            <div class=form-group><label for=usernameI>Username</label><input id=usernameI name=username class=form-control /></div>
+            <div class=form-group><label for=passwordI>Password</label><input id=passwordI name=password class=form-control type=password /></div>
+            <input name="next" type="hidden" value="@Request.Query["next"]" />
+            <button class="btn btn-primary">Sign In</button>
+        </form><br /><br />
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    </div>
+    <div class="col-md-4 ml-auto">
+        <h2 style="text-align:center">Sign Up</h2>
+        <form method="POST">
+            <div class=form-group><label for=usernameI2>Username</label><input id=usernameI2 name=username class=form-control /></div>
+            <div class=form-group><label for=emailI2>Email</label><input id=emailI2 name=email class=form-control type=email /></div>
+            <div class=form-group><label for=passwordI2>Password</label><input id=passwordI2 name=password class=form-control type=password /></div>
+            <input name="next" type="hidden" value="@Request.Query["next"]" />
+            <button class="btn btn-primary">Sign Up</button>
+        </form>
+    </div>
+</div>

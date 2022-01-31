@@ -1,0 +1,20 @@
+﻿@page
+@model Codepedia.Pages.sign_outModel
+@{
+    Layout = null;
+}
+<head>
+    <meta name="google-signin-client_id" content="129144355612-kd63kqitjapt8eudcs4dajp54vjp8plg.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+</head>
+<body>
+    <script>
+async function onSignIn(googleUser) {
+    let id_token = googleUser.getAuthResponse().id_token;
+    await gapi.auth2.getAuthInstance().signOut();
+    f.submit();
+}
+    </script>
+    <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    <form method="POST" id=f></form>
+</body>

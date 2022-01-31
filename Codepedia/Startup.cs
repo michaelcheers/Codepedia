@@ -1,4 +1,5 @@
 using Codepedia.DB;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -24,9 +25,17 @@ namespace Codepedia
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, opt =>
+                {
+                    opt.LoginPath = "/sign-in";
+                    opt.ReturnUrlParameter = "next";
+                });
             services.AddRazorPages().AddRazorPagesOptions(options =>
             {
                 options.Conventions.AddPageRoute("/new", "/{slug}/edit");
+                options.Conventions.AddPageRoute("/new", "/suggestedEdits/{suggestedEdit:int}");
+                options.Conventions.AddPageRoute("/new", "/suggestedPosts/{suggestedPost:int}");
             });
             services.AddControllers().AddJsonOptions(options =>
             {
@@ -54,6 +63,7 @@ namespace Codepedia
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

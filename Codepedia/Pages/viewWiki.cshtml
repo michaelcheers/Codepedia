@@ -15,7 +15,46 @@
         display:inline-block;
         padding-right: 20px;
     }
-    </style>
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 10px 11px;
+  transition: 0.3s;
+  font-size: 11.5px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+.urlDiv:focus
+{
+    outline: 0.5px solid rgb(118, 118, 118);
+}
+</style>
     <script>
 function changeURL (newURL)
 {
@@ -44,10 +83,13 @@ function toLangName (lang)
 {
     return lang[0].toUpperCase() + lang.substr(1);
 }
-let allLangs = Array.from(document.querySelectorAll('div[data-lang]'));
-if (allLangs.length === 1)
+function withoutDuplicates (arr) {
+  return [...new Set(arr)];
+}
+let allLangs = Array.from(document.querySelectorAll('div[data-lang]:not(div.codes>*)'));
+if (withoutDuplicates(allLangs.map(l => l.getAttribute('data-lang'))).length === 1)
 {
-    codeName.innerText += ' (' + toLangName(allLangs[0].getAttribute('data-lang')) + ')';
+    //codeName.innerText += ' (' + toLangName(allLangs[0].getAttribute('data-lang')) + ')';
     allLangs[0].style.display = 'block';
 }
 else if (allLangs.length > 0)
@@ -81,5 +123,36 @@ else if (allLangs.length > 0)
         langSelector.value = langNamesReversed[l] ?? l;
         langSelector.oninput();
     }
+}
+for (let codeDiv of document.querySelectorAll('div.codes'))
+{
+    const langDivs = Array.from(codeDiv.querySelectorAll('[data-lang]')).map(d => [d, toLangName(d.getAttribute('data-lang'))]);
+    
+    const tabs = [];
+
+    const tabDiv = Object.assign(document.createElement('div'), {className: 'tab'});
+
+    for (const [div, _lang] of langDivs)
+    {
+        const lang = _lang;
+        const langTab = Object.assign(document.createElement('button'), {type: 'button', innerText: lang});
+        langTab.onclick = () =>
+        {
+            for (let t of tabs)
+            {
+                t.className = t.className.replace(" active", "");
+            }
+            langTab.className += ' active';
+            for (let [d, l] of langDivs)
+            {
+                if (l === lang) d.style.display = 'block';
+                else d.style.display = 'none';
+            }
+        };
+        tabDiv.appendChild(langTab);
+        tabs.push(langTab);
+    }
+
+    codeDiv.firstElementChild.before(tabDiv);
 }
 </script>

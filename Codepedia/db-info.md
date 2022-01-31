@@ -29,3 +29,9 @@ ALTER TABLE `WikiCommits` MODIFY COLUMN `Words` VARCHAR(5000) GENERATED ALWAYS A
 ```sql
 (REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(CONCAT(" ", Markdown, " "), "\\W", "  ", 1, 0, "c"), " [a-zA-Z]([a-z]*) ", "  ", 1, 0, "c"), "([A-Z]{2,})([a-z]+)", "$0 $1 $2", 1, 0, "c"), "([a-zA-Z][A-Z]*)([A-Z]| )", "$1  $2", 1, 0, "c"), "([a-zA-Z][a-z]+)", "$1  ", 1, 0, "c"), "_", "  ", 1, 0, "c"), "([a-zA-Z]([A-Z][A-Z]*|[a-z][a-z]*)|[0-9]+)", "$1 ", 1, 0, "c"), " +", " ", 1, 0, "c"), "^( ?)(.*)( +)$", "$2", 1, 0, "c"))
 ```
+
+# `Users`.`DisplayName` Column
+Adding it:
+```sql
+ALTER TABLE `Users` ADD `DisplayName` VARCHAR(130) GENERATED ALWAYS AS (IF(Role='Admin', CONCAT("♦ ", Username), Username)) STORED AFTER `Username`;
+```

@@ -44,10 +44,19 @@ namespace Codepedia.DB
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.GoogleUserId)
+                entity.Property(e => e.DisplayName).HasMaxLength(130);
+
+                entity.Property(e => e.Email)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(256);
+
+                entity.Property(e => e.GoogleUserId)
+                    .HasMaxLength(128)
                     .HasColumnName("GoogleUserID");
+
+                entity.Property(e => e.Password)
+                    .HasMaxLength(128)
+                    .IsFixedLength(true);
 
                 entity.Property(e => e.Role)
                     .IsRequired()
@@ -66,7 +75,15 @@ namespace Codepedia.DB
 
                 entity.HasIndex(e => e.Markdown, "Markdown");
 
+                entity.HasIndex(e => new { e.Markdown, e.Words }, "Markdown_2");
+
                 entity.HasIndex(e => e.SuggestedBy, "SuggestedBy");
+
+                entity.HasIndex(e => e.WikiPostSuggestionId, "WikiPostSuggestionID")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.WikiSuggestionId, "WikiSuggestionID")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.Words, "Words");
 
@@ -88,6 +105,10 @@ namespace Codepedia.DB
 
                 entity.Property(e => e.TimeCreated).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                entity.Property(e => e.WikiPostSuggestionId).HasColumnName("WikiPostSuggestionID");
+
+                entity.Property(e => e.WikiSuggestionId).HasColumnName("WikiSuggestionID");
+
                 entity.Property(e => e.Words).HasColumnType("varchar(5000)");
 
                 entity.HasOne(d => d.ApprovedByNavigation)
@@ -107,6 +128,16 @@ namespace Codepedia.DB
                     .HasForeignKey(d => d.SuggestedBy)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("WikiCommits_ibfk_5");
+
+                entity.HasOne(d => d.WikiPostSuggestion)
+                    .WithOne(p => p.WikiCommit)
+                    .HasForeignKey<WikiCommit>(d => d.WikiPostSuggestionId)
+                    .HasConstraintName("WikiCommits_ibfk_6");
+
+                entity.HasOne(d => d.WikiSuggestion)
+                    .WithOne(p => p.WikiCommit)
+                    .HasForeignKey<WikiCommit>(d => d.WikiSuggestionId)
+                    .HasConstraintName("WikiCommits_ibfk_7");
             });
 
             modelBuilder.Entity<WikiEntry>(entity =>

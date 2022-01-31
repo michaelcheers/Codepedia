@@ -1,0 +1,10 @@
+﻿@page
+@model Codepedia.Pages.google_sign_inModel
+@{
+}
+<form method="POST">
+    <div class=form-group><label for=usernameI>Username</label><input id=usernameI name=username class=form-control /></div>
+    <input type=hidden name="id_token" value="@Model.IdToken" />
+    <input type="hidden" name="next" value="@Request.Query["next"]" />
+    <button>Confirm User</button>
+</form>

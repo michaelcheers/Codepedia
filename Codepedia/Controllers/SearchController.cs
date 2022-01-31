@@ -23,7 +23,7 @@ namespace Codepedia.Controllers
                 new CommandCreator(conn,
                     "SELECT a.* FROM WikiCommits a INNER JOIN (" +
                       "SELECT EntryID, MAX(TimeCreated) TimeCreated FROM WikiCommits" +
-                      " WHERE MATCH(Markdown, Words) AGAINST(@q IN NATURAL LANGUAGE MODE)" +
+                      " WHERE MATCH(Name, Markdown, Words) AGAINST(@q IN NATURAL LANGUAGE MODE)" +
                       " GROUP BY EntryID" +
                     ") b" +
                     " ON a.EntryID = b.EntryID AND a.TimeCreated = b.TimeCreated"
