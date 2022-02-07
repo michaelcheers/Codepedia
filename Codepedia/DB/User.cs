@@ -9,10 +9,11 @@ namespace Codepedia.DB
     {
         public User()
         {
-            WikiCommitApprovedByNavigations = new HashSet<WikiCommit>();
-            WikiCommitSuggestedByNavigations = new HashSet<WikiCommit>();
-            WikiPostSuggestions = new HashSet<WikiPostSuggestion>();
-            WikiSuggestions = new HashSet<WikiSuggestion>();
+            CommitDrafts = new HashSet<CommitDraft>();
+            EntryCommits = new HashSet<EntryCommit>();
+            Inboxes = new HashSet<Inbox>();
+            WikiSuggestionSuggestedByNavigations = new HashSet<WikiSuggestion>();
+            WikiSuggestionUserRejectedNavigations = new HashSet<WikiSuggestion>();
         }
 
         public int Id { get; set; }
@@ -23,9 +24,10 @@ namespace Codepedia.DB
         public string Password { get; set; }
         public string GoogleUserId { get; set; }
 
-        public virtual ICollection<WikiCommit> WikiCommitApprovedByNavigations { get; set; }
-        public virtual ICollection<WikiCommit> WikiCommitSuggestedByNavigations { get; set; }
-        public virtual ICollection<WikiPostSuggestion> WikiPostSuggestions { get; set; }
-        public virtual ICollection<WikiSuggestion> WikiSuggestions { get; set; }
+        public virtual ICollection<CommitDraft> CommitDrafts { get; set; }
+        public virtual ICollection<EntryCommit> EntryCommits { get; set; }
+        public virtual ICollection<Inbox> Inboxes { get; set; }
+        public virtual ICollection<WikiSuggestion> WikiSuggestionSuggestedByNavigations { get; set; }
+        public virtual ICollection<WikiSuggestion> WikiSuggestionUserRejectedNavigations { get; set; }
     }
 }

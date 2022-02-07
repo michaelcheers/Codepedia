@@ -11,7 +11,7 @@ namespace Codepedia
     {
         public string Get (string markdown)
         {
-            return DisplayMarkdown(markdown);
+            return DisplayMarkdown(markdown, colorCode: true);
         }
     }
 }

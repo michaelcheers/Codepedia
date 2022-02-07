@@ -7,17 +7,24 @@ namespace Codepedia.DB
 {
     public partial class WikiSuggestion
     {
-        public int Id { get; set; }
-        public int CommitId { get; set; }
-        public string Slug { get; set; }
-        public string Name { get; set; }
-        public string Markdown { get; set; }
-        public int SuggestedBy { get; set; }
-        public DateTime TimeCreated { get; set; }
-        public string Status { get; set; }
+        public WikiSuggestion()
+        {
+            SuggestionCommits = new HashSet<SuggestionCommit>();
+        }
 
-        public virtual WikiCommit Commit { get; set; }
+        public int Id { get; set; }
+        public int? EntryId { get; set; }
+        public int SuggestedBy { get; set; }
+        public string Status { get; set; }
+        public int? MergingCommitId { get; set; }
+        public int? ReputationAwarded { get; set; }
+        public DateTime? TimeRejected { get; set; }
+        public int? UserRejected { get; set; }
+
+        public virtual WikiEntry Entry { get; set; }
+        public virtual EntryCommit MergingCommit { get; set; }
         public virtual User SuggestedByNavigation { get; set; }
-        public virtual WikiCommit WikiCommit { get; set; }
+        public virtual User UserRejectedNavigation { get; set; }
+        public virtual ICollection<SuggestionCommit> SuggestionCommits { get; set; }
     }
 }

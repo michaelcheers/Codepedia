@@ -3,34 +3,83 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Codepedia</title>
+    <title>@ViewData["Title"] - CODING.CLICK</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
     @await RenderSectionAsync("HEAD", required: false)
+    <script>
+    function q (name, defaultValue)
+    {
+	    return new URLSearchParams(window.location.search).get(name) ?? defaultValue;
+    }
+    function modifyURL (newURL)
+    {
+        history.replaceState({}, '', newURL);
+    }
+    function modifyQS (key, value, defaultValue)
+    {
+	    if (value !== undefined && value === defaultValue)
+		    value = undefined;
+        modifyURL(withQS(location.href, key, value));
+    }
+    function withQS(uri, key, value)
+    {
+        var re = new RegExp("([?&])" + key + "=.*?(&|#|$)", "i");
+        if( value === undefined )
+        {
+  	        if (uri.match(re))
+            {
+		        return uri.replace(re, '$1$2').replace(/[?&]$/, '').replaceAll(/([?&])&+/g, '$1').replace(/[?&]#/, '#');
+	        }
+            else
+            {
+		        return uri.replace(new RegExp(`[?]${key}&`), '?')
+                            .replace(new RegExp(`[?]${key}$`), '')
+                            .replace(new RegExp(`[&]${key}(&|$)`), '$1');
+	        }
+        }
+        else
+        {
+  	        if (uri.match(re)) {
+  		        return uri.replace(re, '$1' + key + "=" + value + '$2');
+	        } else {
+            var hash =  '';
+                if( uri.indexOf('#') !== -1 ){
+                    hash = uri.replace(/.*#/, '#');
+                    uri = uri.replace(/#.*/, '');
+                }
+                var separator = uri.indexOf('?') !== -1 ? "&" : "?";    
+                return uri + separator + key + "=" + value + hash;
+            }
+        }
+    }
+    </script>
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">Codepedia</a>
+                <a class="navbar-brand" asp-area="" asp-page="/Index">
+                    <img src="/img/coding_click.png" style="height: 30px; width: auto;" /></a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
+                    <input type=search id=searchBox placeholder="Search for some code..." value="@ViewData["defaultSearchBoxVal"]" style="width:600px;font-size:1.5em" />
+                    @*<ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item" style="padding-top:6px;">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item" style="padding-top:6px;">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         </li>
-                    </ul>
+                    </ul>*@
                     <ul class="navbar-nav">
                     @if (Context.UserRole() != UserRole.Anonymous)
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" title="Manage" href="/user">@User.Identity.Name</a>
+                            <a class="nav-link text-dark" title="Manage" href="/users/@Context.Username()">@User.Identity.Name</a>
                         </li>
                         <li class="nav-item">
                             <form class="form-inline" action="/sign-out" method="get">
@@ -65,16 +114,98 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2022 - Codepedia - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        let allResults = new Map();
+        let searchResultsDiv;
+        let searchResultsErrorSpan;
+        let loadingText;
+        let searchTimeout;
+        let oldURL = location.href;
+
+        async function search (term)
+        {
+            let searchResults;
+            try
+            {
+                let res = await fetch("/api/search?" + new URLSearchParams({q: term}));
+                if (res.ok)
+                {
+                    searchResults = await res.json();
+                }
+            }
+            catch (e) { }
+            loadingText.innerHTML = '<br>';
+            for (let [, r] of allResults)
+                r.style.display = 'none';
+            if (searchResults === undefined)
+            {
+                searchResultsErrorSpan.innerText = "Network Error";
+                return;
+            }
+            for (let r of searchResults)
+            {
+                if (allResults.has(r.id))
+                {
+                    allResults.get(r.id).style.display = '';
+                }
+                else
+                {
+                    let d = searchResultsDiv.appendChild(document.createElement('div'));
+                    let h = d.appendChild(document.createElement('div'));
+                    let h_a = h.appendChild(document.createElement('a'));
+                    h_a.innerText = r.name;
+                    h_a.style.fontSize = '2em';
+                    h_a.href = "/" + encodeURIComponent(r.slug);
+                    d.insertAdjacentHTML('beforeend', r.preview);
+                    allResults.set(r.id, d);
+                }
+            }
+        }
+
+        searchBox.oninput = function()
+        {
+            modifyURL(withQS('/', 'q', searchBox.value));
+
+            if (searchResultsDiv === undefined)
+            {
+                searchResultsDiv = document.createElement('div');
+                let h1 = searchResultsDiv.appendChild(document.createElement('h1'));
+                h1.style.textAlign = 'center';
+                h1.style.textDecoration = 'underline';
+                h1.innerText = "Search Results";
+                loadingText = searchResultsDiv.appendChild(document.createElement('div'));
+                loadingText.style.textAlign = 'center';
+                loadingText.style.fontSize = '2em';
+                loadingText.innerText = 'Loading...';
+                searchResultsErrorSpan = searchResultsDiv.appendChild(document.createElement('div'));
+                searchResultsErrorSpan.style.color = 'red';
+                document.querySelector('main.pb-3').after(searchResultsDiv);
+            }
+
+            clearTimeout(searchTimeout);
+            if (searchBox.value !== '')
+            {
+                loadingText.innerText = 'Loading...';
+                document.querySelector('main.pb-3').style.display = 'none';
+                searchResultsDiv.style.display = '';
+                searchTimeout = setTimeout(async () =>
+                {
+                    search(searchBox.value);
+                }, 1000);
+            }
+            else
+            {
+                modifyURL(oldURL);
+                document.querySelector('main.pb-3').style.display = '';
+                searchResultsDiv.style.display = 'none';
+            }
+        };
+    </script>
 </body>
 </html>

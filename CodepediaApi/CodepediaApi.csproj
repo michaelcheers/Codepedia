@@ -123,6 +123,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MoreNodes.cs" />
     <Compile Include="CodeModifier.cs" />
     <Compile Include="CodepediaApi.cs" />
     <Compile Include="CodeAnalyzer.cs" />

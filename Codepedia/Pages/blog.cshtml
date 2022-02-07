@@ -1,0 +1,25 @@
+﻿@page
+@model Codepedia.Pages.blogModel
+@{
+}
+<h1 style="text-align:center"><u>Blog Posts</u></h1>
+@if (Model.BlogPosts.Count == 0)
+{
+    <h1>[No Blog Posts Yet] (Coming Soon)</h1>
+}
+else
+{
+    foreach (var blogPost in Model.BlogPosts)
+    {
+        <h2><a href="/blog/@blogPost.Id">@blogPost.Name</a></h2>
+        <div style="border-top: 1px solid black; border-bottom: 1px solid black; display: inline-block">
+            Created @blogPost.TimeCreated.ToRelativeTime()
+            @if (blogPost.TimeCreated != blogPost.LastUpdated)
+            {
+                <text>
+                    • Last Updated @blogPost.LastUpdated.ToRelativeTime()
+                </text>
+            }
+        </div>
+    }
+}

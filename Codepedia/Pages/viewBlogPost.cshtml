@@ -1,0 +1,19 @@
+﻿@page "/blog/{id:int}"
+@model Codepedia.Pages.viewBlogPostModel
+@{
+}
+<style>
+</style>
+<h1 style="text-align:center"><u>@Model.Post.Name</u></h1>
+<div style="border-top: 1px solid black; border-bottom: 1px solid black; display: inline-block">
+    Created @Model.Post.TimeCreated.ToRelativeTime()
+    @if (Model.Post.TimeCreated != Model.Post.LastUpdated)
+    {
+        <text>
+            • Last Updated @Model.Post.LastUpdated.ToRelativeTime()
+        </text>
+    }
+</div>
+<div style="font-size:2em">
+@Html.Raw(Functions.DisplayMarkdown(Model.Post.BlogContent))
+</div>

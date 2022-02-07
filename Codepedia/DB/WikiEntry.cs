@@ -9,11 +9,13 @@ namespace Codepedia.DB
     {
         public WikiEntry()
         {
-            WikiCommits = new HashSet<WikiCommit>();
+            EntryCommits = new HashSet<EntryCommit>();
+            WikiSuggestions = new HashSet<WikiSuggestion>();
         }
 
         public int Id { get; set; }
 
-        public virtual ICollection<WikiCommit> WikiCommits { get; set; }
+        public virtual ICollection<EntryCommit> EntryCommits { get; set; }
+        public virtual ICollection<WikiSuggestion> WikiSuggestions { get; set; }
     }
 }

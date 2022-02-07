@@ -68,7 +68,7 @@ public static MemoryStream MergePDFs (IEnumerable<string> pdfFiles)
         [TestMethod]
         public async Task InterpretMarkdownTest ()
         {
-            WikiEntry wikiEntry = await CodepediaApi.InterpretMarkdown(markdown, default);
+            EntryInfo wikiEntry = await CodepediaApi.InterpretMarkdown(markdown, default);
             Assert.AreEqual(2, wikiEntry.Children.Count);
             Assert.IsTrue(wikiEntry.Children.All(h => ((Heading)h).Level == 1));
             Assert.IsTrue(wikiEntry.Children.Select(node => ((Heading)node).Text).SequenceEqual(new[] { "Approaches", "Super Approaches" }));

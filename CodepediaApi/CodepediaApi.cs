@@ -92,12 +92,12 @@ namespace Codepedia
         //    }
         //}
 
-        public static async Task<WikiEntry> InterpretMarkdown(string markdown, CancellationToken cancellationToken)
+        public static async Task<EntryInfo> InterpretMarkdown(string markdown, CancellationToken cancellationToken)
         {
             string html = Markdown.ToHtml(markdown);
             IHtmlDocument doc = await new HtmlParser().ParseDocumentAsync(html, cancellationToken);
 
-            WikiEntry wikiEntry = new WikiEntry();
+            EntryInfo wikiEntry = new EntryInfo();
 
             Node topNode = wikiEntry;
 
@@ -135,9 +135,9 @@ namespace Codepedia
             return wikiEntry;
         }
 
-        public static async Task<Dictionary<SearchResult, WikiEntry>> InterpretSearchResults (IEnumerable<SearchResult> searchResults, CancellationToken cancellationToken)
+        public static async Task<Dictionary<SearchResult, EntryInfo>> InterpretSearchResults (IEnumerable<SearchResult> searchResults, CancellationToken cancellationToken)
         {
-            Dictionary<SearchResult, WikiEntry> result = new Dictionary<SearchResult, WikiEntry>();
+            Dictionary<SearchResult, EntryInfo> result = new Dictionary<SearchResult, EntryInfo>();
             foreach (SearchResult searchResult in searchResults)
                 result.Add(searchResult, await InterpretMarkdown(searchResult.Markdown, cancellationToken));
             return result;

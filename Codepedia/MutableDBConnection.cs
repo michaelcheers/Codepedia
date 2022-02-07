@@ -80,6 +80,20 @@ namespace Codepedia
         public string CommandText { set => Command.CommandText = value; }
         public MySqlCommand Command;
 
+        public int Run0TO2()
+        {
+            int exec = Command.ExecuteNonQuery();
+            if (exec is not (0 or 1 or 2)) throw new Exception($"Non-query returned {exec} rows!");
+            return exec;
+        }
+
+        public int Run0OR1 ()
+        {
+            int exec = Command.ExecuteNonQuery();
+            if (exec is not (0 or 1)) throw new Exception($"Non-query returned {exec} rows!");
+            return exec;
+        }
+
         public void Run1()
         {
             int exec = Command.ExecuteNonQuery();

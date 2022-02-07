@@ -105,10 +105,10 @@ namespace Codepedia.Lightbulb
                                 Document doc = nullableCodeAnalysisInfo.Value.document;
 
                                 SearchResult[] searchResults = await util.SearchResults.Value(cancellationToken);
-                                Dictionary<SearchResult, WikiEntry> wikiEntries = await util.SearchResultsInfo.Value(cancellationToken);
-                                KeyValuePair<SearchResult, WikiEntry>[] searchResultsInfo = searchResults.Select(res => new KeyValuePair<SearchResult, WikiEntry>(res, wikiEntries[res])).ToArray();
+                                Dictionary<SearchResult, EntryInfo> wikiEntries = await util.SearchResultsInfo.Value(cancellationToken);
+                                KeyValuePair<SearchResult, EntryInfo>[] searchResultsInfo = searchResults.Select(res => new KeyValuePair<SearchResult, EntryInfo>(res, wikiEntries[res])).ToArray();
 
-                                foreach (KeyValuePair<SearchResult, WikiEntry> searchResultInfo in searchResultsInfo)
+                                foreach (KeyValuePair<SearchResult, EntryInfo> searchResultInfo in searchResultsInfo)
                                 {
                                     BaseAction CreateImportAction(string displayText, Method method)
                                     {

@@ -2,9 +2,55 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
+    if ((string)Request.Query["q"] is not ("" or null))
+        ViewData["defaultSearchBoxVal"] = Request.Query["q"];
 }
+@*@section HEAD
+{
+    <style>
+        main
+        {
+            border-left: 0.5px solid black;
+            border-right: 0.5px solid black;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+    </style>
+}*@
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div id=mainDiv style="@(!string.IsNullOrEmpty(Request.Query["q"]) ? "display:none" : "")">
+    <div class="text-center">
+        <h1>Welcome to CODING.CLICK<br /><br /></h1>
+    </div>
+
+    <div style="font-size: 2em; border-top: 1px solid black; border-bottom: 1px solid black;background-color:#ffa">
+        <div style="/*margin-left:25%; margin-right:25%;*/ text-align:center; clear:right; padding-top:0.7em">
+        A library of high-quality coding tutorials, documentation and analysis<br /><br />
+        </div>
+        <div style="float:right; margin-right:10px">
+            <a style="font-size:.8em" class="btn btn-primary" href="/blog">Find out more on our Blog</a>
+        </div>
+        <div style="clear:right; padding-bottom:1em"></div>
+    </div>
+    <br /><br />
+    <div style="font-size:2em; text-align:center">
+    See <a href="/all">our catalog</a>.
+    </div>
 </div>
+@*<h2>See all our <a href="/all">posts</a>.</h2>*@
+
+<script>
+let s = q('q', '');
+window.onload = function()
+{
+    if (search !== '')
+    {
+        oldURL = '/';
+        searchBox.value = s;
+        searchBox.focus();
+        searchBox.selectionStart = searchBox.selectionEnd = searchBox.value.length;
+        mainDiv.style.display = '';
+        searchBox.oninput();
+    }
+};
+</script>

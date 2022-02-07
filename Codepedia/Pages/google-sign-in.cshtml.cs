@@ -2,8 +2,10 @@ using Codepedia.DB;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using MySql.Data.MySqlClient;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Codepedia.Pages
@@ -31,6 +33,8 @@ namespace Codepedia.Pages
 
         public async Task<IActionResult> OnPostAsync(string id_token, string username = null, string next = null)
         {
+            if (string.IsNullOrEmpty(id_token) || string.IsNullOrEmpty(username)) return BadRequest();
+            if (!AccountModel.userNameRegex.IsMatch(username)) return BadRequest(AccountModel.badUsernameMessage);
             next = next is "" or null ? "/" : next;
             GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(id_token, new GoogleJsonWebSignature.ValidationSettings
             {
@@ -40,12 +44,24 @@ namespace Codepedia.Pages
             if (user != null) return await this.SignUserInAsync(user, next, authType: "Google");
             using MutableDBConnection db = await MutableDBConnection.Create();
             using MutableDBTransaction trans = await db.CreateTransaction();
-            new CommandCreator(trans, "INSERT INTO Users (Username, Email, GoogleUserID) VALUES (@username, @email, @googleUserID)")
+            try
             {
-                ["username"] = username,
-                ["email"] = payload.Email,
-                ["googleUserID"] = payload.Subject
-            }.Run1();
+                new CommandCreator(trans, "INSERT INTO Users (Username, Email, GoogleUserID) VALUES (@username, @email, @googleUserID)")
+                {
+                    ["username"] = username,
+                    ["email"] = payload.Email,
+                    ["googleUserID"] = payload.Subject
+                }.Run1();
+            }
+            catch (MySqlException)
+            {
+                return LocalRedirect(
+                    "/google-sign-in" +
+                    "?username-already-taken" +
+                    "&id_token=" + Uri.EscapeUriString(id_token) +
+                    (next != null ? ("&next=" + Uri.EscapeUriString(next)) : "")
+                );
+            }
             trans.Commit();
             return await this.OnGetAsync(id_token, next);
         }

@@ -7,6 +7,8 @@ namespace Codepedia
         public int Id;
         public string Name;
         public string Markdown;
+        public string Preview;
+        public string Slug;
         public DateTime TimeModified;
     }
 }

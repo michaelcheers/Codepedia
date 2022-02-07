@@ -19,7 +19,7 @@ dotnet ef dbcontext scaffold "server=127.0.0.1;uid=root;pwd=mypass123;database=C
 # The Words Column
 Adding it:
 ```sql
-ALTER TABLE `WikiCommits` ADD `Words` VARCHAR(5000) GENERATED ALWAYS AS {formula} STORED AFTER `Markdown`, ADD FULLTEXT (`Words`);
+ALTER TABLE `WikiCommits` ADD `Words` VARCHAR(5000) GENERATED ALWAYS AS {formula} STORED AFTER `Markdown`, ADD FULLTEXT (`Name`, `Markdown`, `Words`);
 ```
 Changing the formula:
 ```sql

@@ -1,32 +1,39 @@
 ﻿@page
 @using Codepedia.DB
 @model Codepedia.Pages.admin.suggestionsModel
+<style>
+    th, td { text-align: center }
+    th, td { border: 1px solid black }
+</style>
 
 <h1>Post Suggestions</h1>
 <table>
     <tr>
         <th>Suggested By</th>
-        <th>Post Name</th>
+        <th>Suggestion Type</th>
+        <th>Post</th>
+        <th>Commits Behind?</th>
+        <th>Number of Commits</th>
+        <th>View Suggestion</th>
     </tr>
-    @foreach ((WikiPostSuggestion suggestion, User suggestedBy) in Model.SuggestedPosts)
+    @foreach (var postInfo in Model.Suggestions)
     {
         <tr>
-            <td>@suggestedBy.DisplayName</td>
-            <td><a href="/suggestedPosts/@suggestion.Id">@suggestion.Name</a></td>
-        </tr>
-    }
-</table>
-<h1>Suggested Edits</h1>
-<table>
-    <tr>
-        <th>Suggested By</th>
-        <th>Entry Editing</th>
-    </tr>
-    @foreach ((WikiSuggestion suggestion, User suggestedBy, WikiCommit latestVersion) in Model.SuggestedEdits)
-    {
-        <tr>
-            <td>@suggestedBy.DisplayName</td>
-            <td><a href="/suggestedEdits/@suggestion.Id">@latestVersion.Name</a></td>
+            <td>@postInfo.SuggestedBy.DisplayName</td>
+            <td>@(postInfo.EntryEditing_LatestVersion == null ? "New Post" : "Edit")</td>
+            <td>
+                @if (postInfo.EntryEditing_LatestVersion == null)
+                {
+                    @postInfo.Commit.Name
+                }
+                else
+                {
+                    <a href="/@postInfo.EntryEditing_LatestVersion.Slug">@postInfo.EntryEditing_LatestVersion.Name</a>
+                }
+            </td>
+            <td>@postInfo.CommitsBehind</td>
+            <td>@postInfo.NumberOfCommits</td>
+            <td><a target=_blank href="/suggestions/@postInfo.Suggestion.Id">[View Suggestion]</a></td>
         </tr>
     }
 </table>

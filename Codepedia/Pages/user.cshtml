@@ -1,4 +1,107 @@
-﻿@page
+﻿@page "/users/{username}"
 @model Codepedia.Pages.userModel
 @{
+}
+@section HEAD
+{
+    <style>
+        th, td
+        {
+            text-align: center;
+            border: 1px solid black;
+        }
+    </style>
+}
+<h1>Basic Data</h1>
+Username: @Model.UserData.Username
+@if (Model.IsUserDataVisible)
+{
+    <br />
+    <text>Email: @Model.UserData.Email</text>
+}
+
+@if (Model.UserData.Role == "Admin")
+{
+    <br />
+    <text>User Type: Admin</text>
+}
+
+<h1>Site Activity</h1>
+
+@if (Model.Suggestions.Count == 0)
+{
+    <text>
+        [None Yet]
+    </text>
+}
+
+@if (Model.UserData.Role != "Admin" && Model.Reputation != 0)
+{
+    <text>Reputation: @Model.Reputation</text>
+}
+
+<br />
+@if (Model.Suggestions.Count > 0)
+{
+    <h2>Post Suggestions</h2>
+    <br />
+    <table>
+        <tr>
+            <th>Suggestion Type</th>
+            <th>Post</th>
+            @if (Model.IsUserDataVisible)
+            {
+                <th>Commits Behind?</th>
+                <th>Number of Commits</th>
+            }
+            <th>View Suggestion</th>
+            @if (Model.IsUserDataVisible)
+            {
+                <th>Suggestion Status</th>
+            }
+            <th>Reputation Awarded?</th>
+        </tr>
+        @foreach (var postInfo in Model.Suggestions)
+        {
+            <tr>
+                <td>@(postInfo.EntryEditing_LatestVersion == null ? "New Post" : "Edit")</td>
+                <td>
+                    @if (postInfo.EntryEditing_LatestVersion == null)
+                    {
+                        @postInfo.Commit.Name
+                    }
+                    else
+                    {
+                        <a href="/@postInfo.EntryEditing_LatestVersion.Slug">@postInfo.EntryEditing_LatestVersion.Name</a>
+                    }
+                </td>
+                @if (Model.IsUserDataVisible)
+                {
+                    <td>@postInfo.CommitsBehind</td>
+                    <td>@postInfo.NumberOfCommits</td>
+                }
+                <td><a href="@(postInfo.MergingCommit != null ?
+                    $"/{postInfo.EntryEditing_LatestVersion.Slug}/commits/{postInfo.MergingCommit.CommitId}" :
+                    $"/suggestions/{postInfo.Suggestion.Id}"
+                )">[View Suggestion]</a></td>
+                @if (Model.IsUserDataVisible)
+                {
+                    <td><span style="color:@(postInfo.Suggestion.Status switch
+                    {
+                        "Accepted" => "green",
+                        "Rejected" => "red",
+                        "Unreviewed" => "auto"
+                    })">@postInfo.Suggestion.Status</span></td>
+                }
+                <td>
+                    @if (postInfo.Suggestion.ReputationAwarded is int r && r != 0)
+                    {
+                        <text>
+                            @if (r > 0) { <span style="color:green">(+@r rep)</span> } else { <span style="color:red">(@r rep)</span>}
+                        </text>
+                    }
+                </td>
+            </tr>
+        }
+    </table>
 }

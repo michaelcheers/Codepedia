@@ -9,26 +9,19 @@ namespace Codepedia.DB
     {
         public WikiCommit()
         {
-            WikiSuggestions = new HashSet<WikiSuggestion>();
+            CommitDrafts = new HashSet<CommitDraft>();
         }
 
         public int Id { get; set; }
-        public int EntryId { get; set; }
         public string Slug { get; set; }
         public string Name { get; set; }
         public string Markdown { get; set; }
         public string Words { get; set; }
-        public int SuggestedBy { get; set; }
-        public int ApprovedBy { get; set; }
-        public int? WikiPostSuggestionId { get; set; }
-        public int? WikiSuggestionId { get; set; }
+        public string Message { get; set; }
         public DateTime TimeCreated { get; set; }
 
-        public virtual User ApprovedByNavigation { get; set; }
-        public virtual WikiEntry Entry { get; set; }
-        public virtual User SuggestedByNavigation { get; set; }
-        public virtual WikiPostSuggestion WikiPostSuggestion { get; set; }
-        public virtual WikiSuggestion WikiSuggestion { get; set; }
-        public virtual ICollection<WikiSuggestion> WikiSuggestions { get; set; }
+        public virtual EntryCommit EntryCommit { get; set; }
+        public virtual SuggestionCommit SuggestionCommit { get; set; }
+        public virtual ICollection<CommitDraft> CommitDrafts { get; set; }
     }
 }

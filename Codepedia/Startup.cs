@@ -34,8 +34,9 @@ namespace Codepedia
             services.AddRazorPages().AddRazorPagesOptions(options =>
             {
                 options.Conventions.AddPageRoute("/new", "/{slug}/edit");
-                options.Conventions.AddPageRoute("/new", "/suggestedEdits/{suggestedEdit:int}");
-                options.Conventions.AddPageRoute("/new", "/suggestedPosts/{suggestedPost:int}");
+                options.Conventions.AddPageRoute("/new", "/{slug}/commits/{commitID}");
+                //options.Conventions.AddPageRoute("/new", "/{slug}/edit/{draft:int}");
+                options.Conventions.AddPageRoute("/new", "/suggestions/{suggestion:int}");
             });
             services.AddControllers().AddJsonOptions(options =>
             {

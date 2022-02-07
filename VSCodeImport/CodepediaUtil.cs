@@ -23,7 +23,7 @@ namespace Codepedia
 
         public readonly TaskManager<(Document document, SemanticModel semanticModel, SyntaxNode outerNode, UnresolvedMethodCallInfo unresolvedInvocation)?> CodeAnalysisInfo;
         public readonly TaskManager<SearchResult[]> SearchResults;
-        public readonly TaskManager<Dictionary<SearchResult, WikiEntry>> SearchResultsInfo;
+        public readonly TaskManager<Dictionary<SearchResult, EntryInfo>> SearchResultsInfo;
 
         public async Task<UnresolvedMethodCallInfo?> UnresolvedInvocation (CancellationToken cancellationToken)
         {
@@ -67,12 +67,12 @@ namespace Codepedia
                     return await CodepediaApi.Search(unresolvedInvocation.Name, cancellationToken);
                 }
             );
-            SearchResultsInfo = new TaskManager<Dictionary<SearchResult, WikiEntry>>
+            SearchResultsInfo = new TaskManager<Dictionary<SearchResult, EntryInfo>>
             (
                 async (CancellationToken cancellationToken) =>
                 {
                     UnresolvedMethodCallInfo? unresolvedInvocation = await UnresolvedInvocation(cancellationToken);
-                    if (unresolvedInvocation == null) return new Dictionary<SearchResult, WikiEntry>();
+                    if (unresolvedInvocation == null) return new Dictionary<SearchResult, EntryInfo>();
                     string invocationName = unresolvedInvocation.Name;
 
                     return await CodepediaApi.InterpretSearchResults(await SearchResults.Value(cancellationToken), cancellationToken);

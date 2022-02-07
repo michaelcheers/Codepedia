@@ -23,19 +23,59 @@ function onSignIn(googleUser) {
     <div class="col-md-4">
         <h2 style="text-align:center">Sign In</h2>
         <form method="POST">
-            <div class=form-group><label for=usernameI>Username</label><input id=usernameI name=username class=form-control /></div>
-            <div class=form-group><label for=passwordI>Password</label><input id=passwordI name=password class=form-control type=password /></div>
+            <div class=form-group>
+                <label for=usernameI>Username</label>
+                <input id=usernameI name=username class=form-control required pattern="@AccountModel.userNameRegex" title="@AccountModel.badUsernameMessage" />
+            </div>
+            <div class=form-group>
+                <label for=passwordI>Password</label>
+                <input id=passwordI name=password class=form-control required pattern="@AccountModel.passwordRegex" title="@AccountModel.badPasswordMessage" type=password />
+            </div>
+            @if (Request.Query.TryGetValue("incorrect-username", out _))
+            {
+                <div class="alert alert-danger" role="alert">Username was not found.</div>
+                <script>modifyQS('incorrect-username', undefined)</script>
+            }
+            @if (Request.Query.TryGetValue("incorrect-password", out _))
+            {
+                <div class="alert alert-danger" role="alert">Password did not match username found.</div>
+                <script>modifyQS('incorrect-password', undefined)</script>
+            }
             <input name="next" type="hidden" value="@Request.Query["next"]" />
             <button class="btn btn-primary">Sign In</button>
         </form><br /><br />
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        @*<div class="g-signin2" data-onsuccess="onSignIn"></div>*@
     </div>
     <div class="col-md-4 ml-auto">
         <h2 style="text-align:center">Sign Up</h2>
         <form method="POST">
-            <div class=form-group><label for=usernameI2>Username</label><input id=usernameI2 name=username class=form-control /></div>
-            <div class=form-group><label for=emailI2>Email</label><input id=emailI2 name=email class=form-control type=email /></div>
-            <div class=form-group><label for=passwordI2>Password</label><input id=passwordI2 name=password class=form-control type=password /></div>
+            <script>
+            function passwordConfirm ()
+            {
+                passwordI3.setCustomValidity(passwordI2.value === passwordI3.value ? '' : 'Passwords do not match');
+            }
+            </script>
+            <div class=form-group>
+                <label for=usernameI2>Username</label>
+                <input id=usernameI2 name=username class=form-control required pattern="@AccountModel.userNameRegex" title="@AccountModel.badUsernameMessage" />
+            </div>
+            <div class=form-group>
+                <label for=emailI2>Email</label>
+                <input id=emailI2 class=form-control type=email required pattern="@AccountModel.emailRegex" title="@AccountModel.badEmailMessage" name=email />
+            </div>
+            <div class=form-group>
+                <label for=passwordI2>Password</label>
+                <input id=passwordI2 class=form-control required pattern="@AccountModel.passwordRegex" title="@AccountModel.badPasswordMessage" type=password onchange="passwordConfirm()" name=password />
+            </div>
+            <div class=form-group>
+                <label for=passwordI3>Confirm Password</label>
+                <input id=passwordI3 class=form-control required pattern="@AccountModel.passwordRegex" title="@AccountModel.badPasswordMessage" type=password onchange="passwordConfirm()" />
+            </div>
+            @if (Request.Query.TryGetValue("username-already-taken", out _))
+            {
+                <div class="alert alert-danger" role="alert">Username already taken.</div>
+                <script>modifyQS('username-already-taken', undefined)</script>
+            }
             <input name="next" type="hidden" value="@Request.Query["next"]" />
             <button class="btn btn-primary">Sign Up</button>
         </form>
