@@ -78,22 +78,25 @@ namespace Codepedia
         public static IEnumerable<SuggestionInfo> SuggestionsInfo (IQueryable<WikiSuggestion> suggestions)
         {
             return (from suggestion in suggestions
-                    let Entry = suggestion.Entry
                     let FirstCommitInfo = suggestion.SuggestionCommits.OrderBy(c => c.Commit.TimeCreated).First()
                     let LastCommitInfo = suggestion.SuggestionCommits.OrderByDescending(c => c.Commit.TimeCreated).First()
                     let MergingCommit = suggestion.MergingCommit
+                    let Entry = suggestion.Entry
                     select new
                     {
                         Suggestion = suggestion,
                         SuggestedBy = suggestion.SuggestedByNavigation,
                     
                         CommitsBehind = Entry == null ? null : (int?)
-                            Entry.EntryCommits.Count(c => c.TimeCommited >
-                            (MergingCommit != null ? MergingCommit.TimeCommited : LastCommitInfo.BaseEntryCommit.TimeCommited)
+                        (
+                            MergingCommit == null ?
+                                -Entry.EntryCommits.Count(c => c.TimeCommited > MergingCommit.TimeCommited) :
+                                 Entry.EntryCommits.Count(c => c.TimeCommited > LastCommitInfo.BaseEntryCommit.TimeCommited)
                         ),
                     
-                        EntryEditing_LatestVersion = Entry == null ? null :
-                            Entry.EntryCommits.OrderByDescending(c => c.TimeCommited).First().Commit, // Last Commit on the entry
+                        EntryEditing_LatestVersion = Entry == null ? MergingCommit == null ? null :
+                            MergingCommit.Entry.EntryCommits.OrderByDescending(c => c.TimeCommited).First().Commit :
+                                          Entry.EntryCommits.OrderByDescending(c => c.TimeCommited).First().Commit, // Last Commit on the entry
                     
                         TimeCreated = FirstCommitInfo.Commit.TimeCreated,
                         LastUpdated = MergingCommit != null ? MergingCommit.Commit.TimeCreated : LastCommitInfo.Commit.TimeCreated,

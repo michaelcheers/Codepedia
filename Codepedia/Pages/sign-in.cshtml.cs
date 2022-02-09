@@ -61,9 +61,9 @@ namespace Codepedia.Pages
                 return await OnPostAsync(username, password);
             }
             User user = DB.Users.SingleOrDefault(u => u.Username == username);
-            if (user == null) return Redirect("/sign-in?incorrect-username");
+            if (user == null) return LocalRedirect("/sign-in?incorrect-username");
 
-            if (!Crypter.CheckPassword(password, user.Password)) return Redirect("/sign-in?incorrect-password");
+            if (!Crypter.CheckPassword(password, user.Password)) return LocalRedirect("/sign-in?incorrect-password");
 
             return await this.SignUserInAsync(user, next);
         }

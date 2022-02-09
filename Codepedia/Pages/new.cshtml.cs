@@ -441,24 +441,32 @@ namespace Codepedia.Pages
                     }.Run1();
 
                     trans.Commit();
-                    return Redirect($"/suggestions/{suggestionID}");
+                    return LocalRedirect($"/suggestions/{suggestionID}");
                 }
             }
             else
             {
+                // Making or approving a suggestion or editing a post or suggestion
+
+                int entryID;
+                EntryCommit? baseEntryCommit = null;
+                
+                // Find or create the relevant post
                 if (baseEntryCommitID is not int entryCommitID)
                 {
-                    // There is no entry commit ID but there is a suggestion commit ID.
-                    return BadRequest("An entry commit ID was provided but a suggestion commit ID was not." +
-                        " All edit requests must include either neither (meaning a new post)," +
-                        " just an entry commit ID, or both an entry commit ID and a suggestion commit ID.");
+                    entryID = new CommandCreator(trans, "INSERT INTO WikiEntries () VALUES ();").RunID();
                 }
-
-                if (DB.EntryCommits.FirstOrDefault(e => e.CommitId == entryCommitID) is not EntryCommit baseEntryCommit)
-                    return NotFound($"Entry Commit {entryCommitID} not found.");
+                else
+                {
+                    if (DB.EntryCommits.FirstOrDefault(e => e.CommitId == entryCommitID) is not EntryCommit ec)
+                        return NotFound($"Entry Commit {entryCommitID} not found.");
+                    baseEntryCommit = ec;
+                    entryID = ec.EntryId;
+                }
 
                 WikiSuggestion? suggestion = null;
 
+                // Find the relevant suggestion
                 if (baseSuggestionCommitID is int suggestionCommit)
                 {
                     suggestion = (from s in DB.SuggestionCommits
@@ -471,24 +479,28 @@ namespace Codepedia.Pages
 
                 if (HttpContext.UserRole() == UserRole.Admin)
                 {
-                    // Editing a post
-
                     // Add the commit to the post.
 
                     try
                     {
-                        new CommandCreator(trans, "INSERT INTO EntryCommits (EntryID, CommitID, ApprovedBy)" +
-                            " SELECT @entryID as EntryID, @commitID as CommitID, @approvedBy as ApprovedBy" +
-                            " FROM EntryCommits" +
-                            // We must check that no more commits were made to the post because this would result in a merge conflict.
-                            " WHERE (EntryID=@entryID AND TimeCommited>@baseCommitTimeCommited) HAVING COUNT(*)=0"
+                        CommandCreator command = new CommandCreator(trans, "INSERT INTO EntryCommits (EntryID, CommitID, ApprovedBy)" +
+                            string.Format(
+                                baseEntryCommit != null ?
+                                (" SELECT {0} as EntryID, {1} as CommitID, {2} as ApprovedBy FROM EntryCommits" +
+                                 // We must check that no more commits were made to the post because this would result in a merge conflict.
+                                 " WHERE (EntryID={0} AND TimeCommited>@baseCommitTimeCommited) HAVING COUNT(*)=0"
+                                ) :
+                                " VALUES ({0}, {1}, {2})", "@entryID", "@commitID", "@approvedBy"
+                            )
                         )
                         {
-                            ["entryID"] = baseEntryCommit.EntryId,
+                            ["entryID"] = entryID,
                             ["commitID"] = commitID,
                             ["approvedBy"] = HttpContext.UserID(),
-                            ["baseCommitTimeCommited"] = baseEntryCommit.TimeCommited
-                        }.Run1();
+                        };
+                        if (baseEntryCommit != null)
+                            command["baseCommitTimeCommited"] = baseEntryCommit.TimeCommited;
+                        command.Run1();
                     }
                     catch (MySqlException)
                     {
@@ -524,12 +536,12 @@ namespace Codepedia.Pages
                 }
                 else
                 {
-                    // Suggesting an edit to a post or editing an existing suggestion
+                    // Creating or editing a suggestion
 
                     int suggestionID;
                     if (suggestion != null)
                     {
-                        // Editing a suggestion you already made
+                        // Editing a suggestion
 
                         if (DB.WikiSuggestions.FirstOrDefault(s => s.Id == suggestion.Id && s.SuggestedBy == HttpContext.UserID()) is not WikiSuggestion suggested)
                             throw new CodepediaException("The suggestion you are trying to edit either does not exist or is not owned by you.");
@@ -538,9 +550,9 @@ namespace Codepedia.Pages
 
                         suggestionID = suggested.Id;
                     }
-                    else
+                    else if (baseEntryCommit != null)
                     {
-                        // Creating a new suggestion to a post
+                        // Creating a new suggestion
 
                         suggestionID = new CommandCreator(trans, "INSERT INTO WikiSuggestions (EntryID, SuggestedBy) VALUES (@entryID, @suggestedBy);")
                         {
@@ -548,19 +560,21 @@ namespace Codepedia.Pages
                             ["suggestedBy"] = HttpContext.UserID()
                         }.RunID();
                     }
+                    else
+                        throw new CodepediaException("No suggestion and no base entry commit!");
                     new CommandCreator(trans, "INSERT INTO SuggestionCommits (SuggestionID, CommitID, BaseEntryCommitID)" +
                         " VALUES (@suggestionID, @commitID, @baseEntryCommitID)"
                     )
                     {
                         ["suggestionID"] = suggestionID,
                         ["commitID"] = commitID,
-                        ["baseEntryCommitID"] = baseEntryCommit.CommitId
+                        ["baseEntryCommitID"] = baseEntryCommit?.CommitId
                     }.Run1();
                     trans.Commit();
-                    return Redirect($"/suggestions/{suggestionID}");
+                    return LocalRedirect($"/suggestions/{suggestionID}");
                 }
             }
-            return Redirect($"/{slug}");
+            return LocalRedirect($"/{slug}");
         }
     }
 }

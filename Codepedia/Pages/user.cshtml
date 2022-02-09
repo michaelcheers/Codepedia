@@ -94,10 +94,12 @@ Username: @Model.UserData.Username
                     })">@postInfo.Suggestion.Status</span></td>
                 }
                 <td>
-                    @if (postInfo.Suggestion.ReputationAwarded is int r && r != 0)
+                    @if (postInfo.Suggestion.ReputationAwarded is int r@* && r != 0*@)
                     {
                         <text>
-                            @if (r > 0) { <span style="color:green">(+@r rep)</span> } else { <span style="color:red">(@r rep)</span>}
+                            @if (r >= 0) { <span style="color:green">(+@r rep)</span> }
+                            else if (r < 0) { <span style="color:red">(@r rep)</span>}
+                            else { <span style="color:#BDB76B">(+0 rep)</span> }
                         </text>
                     }
                 </td>
