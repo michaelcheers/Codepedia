@@ -166,6 +166,11 @@ for (let codeDiv of document.querySelectorAll('div.codes'))
         tabs.push(langTab);
     }
 
+    if (!langDivs.some(([d])=>d.classList.contains('active')))
+    {
+        tabDiv.querySelector('button').click();
+    }
+
     codeDiv.firstElementChild.before(tabDiv);
 }
 </script>
