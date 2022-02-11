@@ -15,7 +15,7 @@ namespace Codepedia.Pages
 
         public void OnGet()
         {
-            BlogPosts = DB.BlogPosts.ToList();
+            BlogPosts = DB.BlogPosts.OrderByDescending(b => b.TimeCreated).ToList();
         }
     }
 }
