@@ -17,6 +17,13 @@ namespace Codepedia
 {
     public static partial class Extensions
     {
+        public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+            => (from s in source
+                let k = source.Min(keySelector)
+                where k.Equals(keySelector(s))
+                select s
+            ).First();
+
         public static TSource MaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
             => (from s in source
                let k = source.Max(keySelector)

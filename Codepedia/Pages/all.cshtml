@@ -3,7 +3,7 @@
 <h1 style="float:left"><u>All Posts</u></h1>
 <div style="float:right"><a href="/new" target="_blank" style="background-color:#dd3" class="btn">+ Suggest a new Post</a></div>
 <div style="clear:left">
-@foreach (var (entry, commit) in Model.Entries)
+@foreach (var (entry, commit, _) in Model.Entries)
 {
     <h2><a href="/@commit.Slug">@commit.Name</a></h2>
 }
