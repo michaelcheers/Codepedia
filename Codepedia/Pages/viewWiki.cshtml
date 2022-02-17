@@ -71,6 +71,7 @@
     </script>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/vs.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 }
 <div style="margin-left:5%; margin-right:15%; padding-left:15%; padding-right:5%; border-left:0.25px solid black; border-right: 0.25px solid black">
@@ -89,7 +90,9 @@
     
 }
 <div id="langSelectorSlot"></div>
-@Html.Raw(DisplayMarkdown(Model.Commit.Markdown))
+<div ng-app>
+    @Html.Raw(DisplayMarkdown(Model.Commit.Markdown))
+</div>
 </div>
 <script>
 function toLangName (lang)
