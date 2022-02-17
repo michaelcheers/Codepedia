@@ -219,11 +219,11 @@
 		<div class=urlDiv style="border:0.5px solid rgb(118, 118, 118);width:20em;float:right"><label><b style="cursor:text">coding.click/</b><input style="outline:none;border:none;margin:0px;padding:0px" disabled value="@compareTo?.Slug" /></label></div>
 		<br /><br />
 		<div class="tab">
-		  <button type=button class="tablinks" onclick="openTab(this, 'Edit')" name=editBtn>Edit</button>
-		  <button type=button class="tablinks" onclick="openTab(this, 'Preview')">Preview</button>
+		  <button type=button class="tablinks" onclick="openTab0(this, 'Edit0')" name=editBtn>Edit</button>
+		  <button type=button class="tablinks" onclick="openTab0(this, 'Preview0')">Preview</button>
 		</div>
 		<div name=Edit class="tabcontent">
-			<textarea name=markdownOld disabled style="tab-size:4;font-family:SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;width:100%;height:30em">@compareTo?.Markdown</textarea>
+			<textarea disabled style="tab-size:4;font-family:SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;width:100%;height:30em">@compareTo?.Markdown</textarea>
 		</div>
 
 		<div name=Preview class="tabcontent">
@@ -594,9 +594,7 @@ async function openTab(elem, tabName) {
       {
           try
           {
-			  let formData = new FormData(ddForm);
-			  formData.append('markdown', (tabContainerElems.markdown ?? tabContainerElems.markdownOld).value);
-              tabContainerElems.Preview.innerHTML = await (await fetch('/api/markdown', { method: 'POST', body: formData })).text();
+              tabContainerElems.Preview.innerHTML = await (await fetch('/api/markdown?' + new URLSearchParams({markdown: editBox.value}))).text();
               break;
           }
           catch (e)
