@@ -19,7 +19,7 @@ namespace Codepedia
 {
     public static class CodepediaApi
     {
-        private static readonly RestClient client = new RestClient("https://localhost:5001");
+        private static readonly RestClient client = new RestClient("https://coding.click");
         private static readonly Dictionary<string, TaskManager<SearchResult[]>> responses = new Dictionary<string, TaskManager<SearchResult[]>>();
 
         public static async Task<SearchResult[]> Search(string query, CancellationToken cancellationToken)
@@ -169,8 +169,8 @@ namespace Codepedia
                             break;
                         case SyntaxKind.SingleLineCommentTrivia:
                             string commentStr = trivia.ToFullString();
-                            if (commentStr.StartsWith("// @nuget "))
-                                annotations.NugetPackages.Add(commentStr.Substring("// @nuget ".Length));
+                            if (commentStr.StartsWith("// Install-Package "))
+                                annotations.NugetPackages.Add(commentStr.Substring("// Install-Package ".Length));
                                 break;
                     }
                     last = trivia;
