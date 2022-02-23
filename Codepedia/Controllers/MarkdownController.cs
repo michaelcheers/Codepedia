@@ -9,7 +9,7 @@ namespace Codepedia
     [ApiController]
     public class MarkdownController : ControllerBase
     {
-        public string Get (string markdown)
+        public string Post ([FromForm] string markdown)
         {
             return DisplayMarkdown(markdown, colorCode: true);
         }
