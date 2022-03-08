@@ -1,6 +1,11 @@
-﻿@page "/{slug}"
+﻿@page "/{*slug}"
+@using System.Text.Json
+@using static Codepedia.Pages.viewWikiModel
 @using static Codepedia.Functions
 @model Codepedia.Pages.viewWikiModel
+@{
+    ViewData["full-width"] = true;
+}
 @section HEAD
 {
     <style>
@@ -70,30 +75,113 @@
     }
     </script>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/vs.min.css">
+    <link rel="stylesheet" href="~/css/msDropdown.css">
+    <style type="text/css">
+        @@font-face {
+            font-family: docons;
+            src: url(/css/docons.woff2) format("truetype");
+        }
+    </style>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="~/js/msDropdown.js"></script>
 }
-<div style="margin-left:5%; margin-right:15%; padding-left:15%; padding-right:5%; border-left:0.25px solid black; border-right: 0.25px solid black">
-<h1 style="font-size:3em"><span id=codeName>@Model.Commit.Name</span> <span style="font-size:.8em">[<a href="/@Model.Commit.Slug/edit">Edit</a>]</span></h1>
-<div style="border-top: 1px solid black; border-bottom: 1px solid black">
-    Created @Model.TimeCreated.ToRelativeTime() 
-    @if (Model.TimeCreated != Model.LastUpdated)
+<div style="padding-left: calc(50% - 884px); padding-right: calc(50% - 884px);position:sticky;top:70px;flex:none">
+@{
+    bool first = true;
+    foreach (var folder in Model.TopNodes.SelectMany(n => n.Descendants()).Where(n => n.IsExpanded || n.IsSelected))
     {
-        <text>
-            • Last updated @Model.LastUpdated.ToRelativeTime()
-        </text>
+        if (!first) { <text>&nbsp;<span style="color:#a2a2a2">/</span>&nbsp;</text> }
+        if (folder.IsSelected || folder.Slug == null)
+        {
+            <text>@folder.Name</text>
+        }
+        else
+        {
+            <a href="/@folder.Slug">@folder.Name</a>
+        }
+        first = false;
     }
-</div>
-@if (/*user is admin*/true)
-{
-    
 }
-<div id="langSelectorSlot"></div>
-<div ng-app>
-    @Html.Raw(DisplayMarkdown(Model.Commit.Markdown))
 </div>
+<div style="display: flex; position:relative;margin-top:70px">
+    <div class="nav" style="width:25%; flex: none">
+        <nav style="width: 406px; top: 164.5px; bottom: 24px;font-family: Segoe UI,SegoeUI,Helvetica Neue,Helvetica,Arial,sans-serif;-webkit-font-smoothing: antialiased;text-rendering: optimizeLegibility;font-weight: 400" id=theNav>
+            @*<ul>
+                @{
+                    void DisplayNode (FolderNode node)
+                    {
+                        <li>
+                            @{
+                                void TheLink ()
+                                {
+                                    <a href="/@node.Slug">@node.Name</a>
+                                }
+                            }
+                            @if (node.ChildNodes != null)
+                            {
+                                <details>
+                                    <summary>
+                                        @{
+                                            TheLink();
+                                        }
+                                    </summary>
+                                    <ul>
+                                        @foreach (var childNode in node.ChildNodes)
+                                        {
+                                            DisplayNode(childNode);
+                                        }
+                                    </ul>
+                                </details>
+                            }
+                            else
+                            {
+                                TheLink();
+                            }
+                        </li>
+                    }
+                }
+                @foreach (var topNode in Model.TopNodes)
+                {
+                    DisplayNode(topNode);
+                }
+                <li></li>
+            </ul>*@
+            <script>
+                function toMsDropdownNode (node)
+                {
+                    return {
+                        url: node.slug == null ? undefined : ('/' + node.slug),
+                        toc_title: node.name,
+                        children: node.childNodes?.map(toMsDropdownNode),
+                        expanded: node.isExpanded, 
+                        selected: node.isSelected
+                    };
+                }
+                theNav.appendChild(createDropdownTree(@(Html.Raw(Model.TopNodes.ToJson())).map(toMsDropdownNode)));
+            </script>
+        </nav>
+    </div>
+    <div style="flex:none;margin-left:2.5rem; width:45%">
+        <h1 style="font-size:inherit.5rem"><span id=codeName>@Model.Commit.Name</span> <span style="font-size:.8em">[<a href="/@Model.Commit.Slug/edit">Edit</a>]</span></h1>
+        <div style="border-top: 1px solid black; border-bottom: 1px solid black">
+            Created @Model.TimeCreated.ToRelativeTime() 
+            @if (Model.TimeCreated != Model.LastUpdated)
+            {
+                <text>
+                    • Last updated @Model.LastUpdated.ToRelativeTime()
+                </text>
+            }
+        </div>
+        <div id="langSelectorSlot"></div>
+        <div ng-app>
+            @Html.Raw(DisplayMarkdown(Model.Commit.Markdown))
+        </div>
+    </div>
 </div>
+<script>hljs.highlightAll();</script>
+<!-- data-lang code !-->
 <script>
 function toLangName (lang)
 {

@@ -1,0 +1,96 @@
+﻿nav {
+    margin-left:2rem;
+    z-index: 1;
+    position: fixed !important;
+    flex-direction: column !important;
+    display: flex !important;
+}
+.tree ul, ul.tree {
+    list-style-type: none;
+    margin-bottom: 0;
+}
+.tree {
+    font-size: calc(1*.875rem);
+    position: relative;
+}
+.is-vertically-scrollable {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+.flex-grow-1 {
+    flex-grow: 1 !important;
+}
+.flex-shrink-1 {
+    flex-shrink: 1 !important;
+}
+.tree-expander {
+    cursor: pointer;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+.tree-expander, .tree-item.is-leaf {
+    outline-offset: calc(1*-0.125rem) !important;
+}
+.tree-expander, .tree-item.is-leaf {
+    display: block;
+    padding-bottom: calc(1*2*2px);
+    padding-left: calc(1*1rem);
+    padding-top: calc(1*2*2px);
+}
+.tree-item.is-leaf {
+    color: /*var(--theme-text)*/ #171717 !important;
+}
+.tree-item:not(.is-leaf) {
+    outline: none !important;
+}
+
+p.customfont {
+    font-family: "My Custom Font", Verdana, Tahoma;
+}
+
+.docon {
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    direction: ltr;
+    display: inline-block;
+    font-family: docons;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 400;
+    line-height: calc(1*16px);
+    text-align: center;
+    text-transform: none;
+}
+.docon-chevron-right-light:before {
+    content: "\FF34";
+}
+.tree-expander-indicator {
+    color: /*var(--theme-text-subtle)*/ #505050;
+    display: inline-block;
+    font-size: calc(1*.55rem);
+    font-weight: 600;
+    left: calc(1*3px);
+    position: absolute;
+    top: calc(1*7px);
+    transform: rotate(0deg);
+    transition: transform .15s ease-in-out;
+}
+.tree-item.is-selected {
+    background-color: /*var( --theme-body-background-medium) #eeeeee;*/ #f2f2f2;
+    color: /*var(--theme-text-glow-high-contrast)*/ #171717 !important;
+    font-weight: 600;
+}
+.tree-item.is-expanded > .tree-expander > .tree-expander-indicator {
+    transform: rotate(90deg);
+}
+.tree-group {
+    margin-left: -1rem;
+    display: none
+}
+.tree-item.is-expanded > .tree-group {
+    display: block;
+}

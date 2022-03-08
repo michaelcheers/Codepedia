@@ -109,6 +109,19 @@ namespace Codepedia
             IncludeFields = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
+
+        public static TValue TryGetOrAdd<TKey, TValue>(this IDictionary<TKey, TValue> d, TKey key, Func<TValue> toAdd) where TValue : class
+        {
+            if (d.TryGetValue(key, out var value))
+                return value;
+            else
+            {
+                var adding = toAdd();
+                if (adding == null) return null;
+                d.Add(key, adding);
+                return adding;
+            }
+        }
     }
 
     public enum UserRole

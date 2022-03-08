@@ -122,6 +122,8 @@ namespace Codepedia.Pages
             return result;
         }
 
+        public List<FolderNode> TopNodes;
+
         public IActionResult OnGet (string? slug, int? suggestion, int? commitID, int? draftID)
         {
             IQueryable<CommitDraft> myDrafts = DB.CommitDrafts.Where(d => d.Owner == HttpContext.UserID());
@@ -202,20 +204,13 @@ namespace Codepedia.Pages
                 EntryData = ToEntryCommitData(entryInfo.Commit);
                 if (entryInfo.LatestEntryVersion.Id != entryInfo.Commit.Id)
                     LatestEntryData = ToEntryCommitData(entryInfo.LatestEntryVersion);
+                TopNodes = FolderNode.FetchTopNodes(DB, EntryID);
                 return true;
             }
 
-            if (draftID is int draft)
-            {
-                // Draft specified in url.
-                if (AddDraftData(draft))
-                {
-                    // Draft found and is valid.
-                    return Page();
-                }
-            }
-
-            if (suggestion is int sid)
+            // Draft specified in url.
+            if (draftID is int draft && AddDraftData(draft)) ;
+            else if (suggestion is int sid)
             {
                 var drafts = (from commitDraft in myDrafts
                               let baseCommitAsSuggestionCommit = commitDraft.BaseCommit.SuggestionCommit
@@ -270,8 +265,8 @@ namespace Codepedia.Pages
                                                   where commit.EntryId == EntryID!.Value && commit.TimeCommited < EntryData!.Value.TimeCreated
                                                   orderby commit.TimeCommited descending
                                                   select commit.Commit).FirstOrDefault();
-                    if (previousCommit == null) return Page();
-                    PreviousCommitData = ToEntryCommitData(previousCommit);
+                    if (previousCommit != null)
+                        PreviousCommitData = ToEntryCommitData(previousCommit);
                 }
             }
             else if (slug is string entrySlug)
@@ -317,6 +312,8 @@ namespace Codepedia.Pages
                 if (myDrafts.FirstOrDefault(d => d.BaseCommitId == null) is CommitDraft d)
                     AddDraftData(d.Id);
             }
+            if (TopNodes == null)
+                TopNodes = FolderNode.FetchTopNodes(DB);
             return Page();
         }
 

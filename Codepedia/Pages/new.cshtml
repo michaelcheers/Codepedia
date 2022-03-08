@@ -208,6 +208,126 @@
 		</div>
 	}
 </div>
+<style>
+.slash-separated::before {
+	content: '/';
+}
+.slash-separated::before {
+    color: #a2a2a2;
+    display: inline;
+    margin: 0 6px;
+}
+.parenthesy-surrounded input
+{
+	outline: 0.5px solid black;
+}
+.parenthesy-surrounded::before
+{
+	content: '(';
+	font-weight: bold;
+    display: inline;
+	margin-left: 6px;
+	margin-right: 3px;
+}
+.parenthesy-surrounded::after
+{
+	content: ')';
+	font-weight: bold;
+    display: inline;
+	margin-left: 3px;
+}
+#treeElement div { display: inline-block }
+</style>
+<fieldset>
+<legend style="font-weight:bold">Hierachy</legend>
+<div id=treeElement>
+</div>
+</fieldset>
+<script>
+const topNodes = @Html.Raw(Model.TopNodes.ToJson()) ?? [];
+function* descendants (tree)
+{
+	yield tree;
+	if (tree.childNodes == null) return;
+	for (let child of tree.childNodes) {
+		yield* descendants(child);
+	}
+}
+let isFirstSelect = true;
+function createSelectElement (options) {
+	options ??= [];
+	options = options.map(childNode => ({
+		value: childNode.folderID,
+		innerText: childNode.name,
+		selected: childNode.isExpanded || childNode.isSelected
+	}))
+	let div = document.createElement('div');
+	if (!isFirstSelect)
+	    div.className = 'slash-separated';
+	let select = div.appendChild(document.createElement('select'));
+	select.appendChild(Object.assign(document.createElement('option'), { innerText: "(root level)", value: "root" }));
+	select.appendChild(Object.assign(document.createElement('option'), { innerText: "(new folder)", value: "new" }));
+	for (let option of options) {
+		select.appendChild(Object.assign(document.createElement('option'), option));
+	}
+	let childrenDiv = div.appendChild(document.createElement('div'));
+	select.addEventListener('input', () =>
+	{
+		if (select.value === 'new')
+		{
+			childrenDiv.innerHTML = '';
+			let inputDiv = Object.assign(document.createElement('div'), { className: 'parenthesy-surrounded' });
+			let input = inputDiv.appendChild(document.createElement('input'));
+			childrenDiv.appendChild(inputDiv);
+			childrenDiv.appendChild(createSelectElement().div);
+		}
+	});
+	isFirstSelect = false;
+	return { div, select, childrenDiv };
+}
+function exploreTree (nodes, childrenDiv)
+{
+	let relNodes = nodes.filter(childNode => childNode.childNodes?.length > 0);
+	let select = createSelectElement(relNodes);
+	select.select.addEventListener('input', () => {
+		if (select.select.value === 'new') return;
+		select.childrenDiv.innerHTML = '';
+		for (let selectedNode of relNodes.filter(childNode => childNode.folderID == select.select.value))
+			select.childrenDiv.appendChild(createSelectElement(selectedNode.childNodes.filter(childNode => childNode.childNodes?.length > 0)).div);
+	});
+	childrenDiv.appendChild(select.div);
+	for (let selectedNode of relNodes.filter(node => (node.isExpanded || node.isSelected)))
+		exploreTree(selectedNode.childNodes.filter(node => (node.isExpanded || node.isSelected)), select.childrenDiv);
+}
+window.addEventListener('load', () => // Line can be removed.
+{
+	exploreTree(topNodes, treeElement);
+}
+); // Line can be removed.
+</script>
+@{/*
+    bool first = true;
+    foreach (var folder in (from topNode in Model.TopNodes
+						    from n in topNode.Descendants()
+						    where n.IsExpanded || n.IsSelected
+						    select n.ChildNodes ?? new()
+						   ).Prepend(Model.TopNodes)
+						    .Select(nl => nl.Where(n => n.ChildNodes != null).ToArray())
+	)
+    {
+		if (folder.Length == 0) continue;
+        if (!first) { <text>&nbsp;<span style="color:#a2a2a2">/</span>&nbsp;</text> }
+        <select>
+			<option selected>(root level)</option>
+			@foreach (var childNode in folder.Where(n => n.ChildNodes != null))
+			{
+				<option value="@childNode.Name" selected="@((childNode.IsExpanded || childNode.IsSelected) ? "" : null)">@childNode.Name</option>
+			}
+			<option>(new folder)</option>
+		</select>
+        first = false;
+    }
+*/}
 <form style="display:none" method="post" id=ddForm></form>
 <form method=POST id=editForm>
 @if (compareTo != null)

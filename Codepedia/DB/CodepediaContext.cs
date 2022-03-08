@@ -18,8 +18,10 @@ namespace Codepedia.DB
         }
 
         public virtual DbSet<BlogPost> BlogPosts { get; set; }
+        public virtual DbSet<ChildEntry> ChildEntries { get; set; }
         public virtual DbSet<CommitDraft> CommitDrafts { get; set; }
         public virtual DbSet<EntryCommit> EntryCommits { get; set; }
+        public virtual DbSet<HierachyEntry> HierachyEntries { get; set; }
         public virtual DbSet<Inbox> Inboxes { get; set; }
         public virtual DbSet<SuggestionCommit> SuggestionCommits { get; set; }
         public virtual DbSet<User> Users { get; set; }
@@ -51,6 +53,26 @@ namespace Codepedia.DB
                     .HasMaxLength(256);
 
                 entity.Property(e => e.TimeCreated).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<ChildEntry>(entity =>
+            {
+                entity.HasKey(e => e.Child)
+                    .HasName("PRIMARY");
+
+                entity.HasIndex(e => e.Parent, "Parent");
+
+                entity.HasOne(d => d.ChildNavigation)
+                    .WithOne(p => p.ChildEntryChildNavigation)
+                    .HasForeignKey<ChildEntry>(d => d.Child)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("ChildEntries_ibfk_2");
+
+                entity.HasOne(d => d.ParentNavigation)
+                    .WithMany(p => p.ChildEntryParentNavigations)
+                    .HasForeignKey(d => d.Parent)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("ChildEntries_ibfk_1");
             });
 
             modelBuilder.Entity<CommitDraft>(entity =>
@@ -117,6 +139,24 @@ namespace Codepedia.DB
                     .HasForeignKey(d => d.EntryId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("EntryCommits_ibfk_2");
+            });
+
+            modelBuilder.Entity<HierachyEntry>(entity =>
+            {
+                entity.ToTable("HierachyEntry");
+
+                entity.HasIndex(e => e.EntryId, "EntryID");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.EntryId).HasColumnName("EntryID");
+
+                entity.Property(e => e.Title).HasMaxLength(256);
+
+                entity.HasOne(d => d.Entry)
+                    .WithMany(p => p.HierachyEntries)
+                    .HasForeignKey(d => d.EntryId)
+                    .HasConstraintName("HierachyEntry_ibfk_1");
             });
 
             modelBuilder.Entity<Inbox>(entity =>
