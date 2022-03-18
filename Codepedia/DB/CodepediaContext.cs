@@ -18,9 +18,9 @@ namespace Codepedia.DB
         }
 
         public virtual DbSet<BlogPost> BlogPosts { get; set; }
-        public virtual DbSet<ChildEntry> ChildEntries { get; set; }
         public virtual DbSet<CommitDraft> CommitDrafts { get; set; }
         public virtual DbSet<EntryCommit> EntryCommits { get; set; }
+        public virtual DbSet<Hierachy> Hierachies { get; set; }
         public virtual DbSet<HierachyEntry> HierachyEntries { get; set; }
         public virtual DbSet<Inbox> Inboxes { get; set; }
         public virtual DbSet<SuggestionCommit> SuggestionCommits { get; set; }
@@ -55,26 +55,6 @@ namespace Codepedia.DB
                 entity.Property(e => e.TimeCreated).HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
-            modelBuilder.Entity<ChildEntry>(entity =>
-            {
-                entity.HasKey(e => e.Child)
-                    .HasName("PRIMARY");
-
-                entity.HasIndex(e => e.Parent, "Parent");
-
-                entity.HasOne(d => d.ChildNavigation)
-                    .WithOne(p => p.ChildEntryChildNavigation)
-                    .HasForeignKey<ChildEntry>(d => d.Child)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("ChildEntries_ibfk_2");
-
-                entity.HasOne(d => d.ParentNavigation)
-                    .WithMany(p => p.ChildEntryParentNavigations)
-                    .HasForeignKey(d => d.Parent)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("ChildEntries_ibfk_1");
-            });
-
             modelBuilder.Entity<CommitDraft>(entity =>
             {
                 entity.HasIndex(e => e.BaseCommitId, "CommitDraft_ibfk_1");
@@ -84,6 +64,10 @@ namespace Codepedia.DB
                 entity.Property(e => e.Id).HasColumnName("ID");
 
                 entity.Property(e => e.BaseCommitId).HasColumnName("BaseCommitID");
+
+                entity.Property(e => e.HierachyPosition)
+                    .IsRequired()
+                    .HasColumnType("json");
 
                 entity.Property(e => e.LastUpdated).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
@@ -139,6 +123,30 @@ namespace Codepedia.DB
                     .HasForeignKey(d => d.EntryId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("EntryCommits_ibfk_2");
+            });
+
+            modelBuilder.Entity<Hierachy>(entity =>
+            {
+                entity.HasKey(e => e.Child)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("Hierachy");
+
+                entity.HasIndex(e => e.Parent, "Parent");
+
+                entity.Property(e => e.Idx).HasColumnName("IDX");
+
+                entity.HasOne(d => d.ChildNavigation)
+                    .WithOne(p => p.HierachyChildNavigation)
+                    .HasForeignKey<Hierachy>(d => d.Child)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("Hierachy_ibfk_2");
+
+                entity.HasOne(d => d.ParentNavigation)
+                    .WithMany(p => p.HierachyParentNavigations)
+                    .HasForeignKey(d => d.Parent)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("Hierachy_ibfk_1");
             });
 
             modelBuilder.Entity<HierachyEntry>(entity =>

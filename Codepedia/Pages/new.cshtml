@@ -238,11 +238,6 @@
 }
 #treeElement div { display: inline-block }
 </style>
-<fieldset>
-<legend style="font-weight:bold">Hierachy</legend>
-<div id=treeElement>
-</div>
-</fieldset>
 <script>
 const topNodes = @Html.Raw(Model.TopNodes.ToJson()) ?? [];
 function* descendants (tree)
@@ -277,7 +272,9 @@ function createSelectElement (options) {
 		{
 			childrenDiv.innerHTML = '';
 			let inputDiv = Object.assign(document.createElement('div'), { className: 'parenthesy-surrounded' });
-			let input = inputDiv.appendChild(document.createElement('input'));
+			let input = inputDiv.appendChild(Object.assign(document.createElement('input'), {
+				required: true
+			}));
 			childrenDiv.appendChild(inputDiv);
 			childrenDiv.appendChild(createSelectElement().div);
 		}
@@ -304,6 +301,25 @@ window.addEventListener('load', () => // Line can be removed.
 	exploreTree(topNodes, treeElement);
 }
 ); // Line can be removed.
+function onSubmit ()
+{
+	let folders = [];
+	let rootNode = 9;
+	for (let inputORSelect of document.querySelectorAll('#treeElement input, #treeElement select'))
+	{
+		if (inputORSelect instanceof HTMLInputElement)
+		{
+			folders.push(inputORSelect.value);
+		}
+		else if (inputORSelect instanceof HTMLSelectElement)
+		{
+			if (inputORSelect.value === 'root' || inputORSelect.value === 'new') continue;
+			if ((+inputORSelect.value).toString() !== inputORSelect.value) throw Error(`Hierachy error: ${inputORSelect.value}`);
+			rootNode = +inputORSelect.value;
+		}
+	}
+	hierachyInput.value = JSON.stringify([{rootNode, folders}]);
+}
 </script>
 @{/*
     bool first = true;
@@ -329,7 +345,13 @@ window.addEventListener('load', () => // Line can be removed.
     }
 */}
 <form style="display:none" method="post" id=ddForm></form>
-<form method=POST id=editForm>
+<form method=POST id=editForm onsubmit="onSubmit()">
+<fieldset>
+<legend style="font-weight:bold">Hierachy</legend>
+<input id=hierachyInput name=hierachy type="hidden" />
+<div id=treeElement>
+</div>
+</fieldset>
 @if (compareTo != null)
 {
 	@Html.Raw("<div class=\"row\">")
@@ -443,6 +465,7 @@ window.addEventListener('load', () => // Line can be removed.
 		clearTimeout(timeoutID);
 		timeoutID = setTimeout(async () =>
 		{
+			onSubmit();
 			let formData = new FormData(editForm);
 			formData.delete('insertingForReals');
 			formData.append('insertingForReals', false);

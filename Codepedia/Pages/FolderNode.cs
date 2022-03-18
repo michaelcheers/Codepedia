@@ -9,6 +9,7 @@ namespace Codepedia
         public int FolderID;
         public int Rank;
         public bool IsExpanded, IsSelected;
+        public int? EntryID;
         public string Name, Slug;
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public List<FolderNode>? ChildNodes;
@@ -23,14 +24,14 @@ namespace Codepedia
         {
             List<FolderNode> topNodes = new();
 
-            var dbObjs = (from parentChild in db.ChildEntries
+            var dbObjs = (from parentChild in db.Hierachies
                           let entry = parentChild.ChildNavigation.Entry
                           let lastCommit = entry == null ? null : entry.EntryCommits.OrderByDescending(ec => ec.TimeCommited).First().Commit
                           select new
                           {
                               Parent = parentChild.Parent,
                               FolderID = parentChild.Child,
-                              Rank = parentChild.Rank,
+                              Rank = parentChild.Idx,
                               EntryID = entry == null ? null : (int?)entry.Id,
                               Name = parentChild.ChildNavigation.Title ?? (lastCommit == null ? null : lastCommit.Name),
                               Slug = lastCommit == null ? null : lastCommit.Slug
@@ -54,7 +55,8 @@ namespace Codepedia
                         Name = dbObj.Name,
                         Slug = dbObj.Slug,
                         Rank = dbObj.Rank,
-                        IsSelected = isSelected
+                        IsSelected = isSelected,
+                        EntryID = dbObj.EntryID
                     };
 
                     FolderNode? parent = CreateNode(dbObj.Parent);
@@ -85,7 +87,9 @@ namespace Codepedia
                 CreateNode(nodeID);
             }
 
-            foreach ((_, FolderNode node) in nodeObjs)
+            topNodes = topNodes.OrderBy(t => t.Rank).ToList();
+
+            foreach (FolderNode node in nodeObjs.Values)
             {
                 if (node.ChildNodes == null) continue;
                 node.ChildNodes = node.ChildNodes.OrderBy(n => n.Rank).ToList();

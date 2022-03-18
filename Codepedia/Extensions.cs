@@ -110,6 +110,12 @@ namespace Codepedia
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
 
+        public static T ToJson<T> (this string json) => JsonSerializer.Deserialize<T>(json, new()
+        {
+            IncludeFields = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
         public static TValue TryGetOrAdd<TKey, TValue>(this IDictionary<TKey, TValue> d, TKey key, Func<TValue> toAdd) where TValue : class
         {
             if (d.TryGetValue(key, out var value))

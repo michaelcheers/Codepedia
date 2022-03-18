@@ -9,7 +9,7 @@ namespace Codepedia.DB
     {
         public HierachyEntry()
         {
-            ChildEntryParentNavigations = new HashSet<ChildEntry>();
+            HierachyParentNavigations = new HashSet<Hierachy>();
         }
 
         public int Id { get; set; }
@@ -17,7 +17,7 @@ namespace Codepedia.DB
         public string Title { get; set; }
 
         public virtual WikiEntry Entry { get; set; }
-        public virtual ChildEntry ChildEntryChildNavigation { get; set; }
-        public virtual ICollection<ChildEntry> ChildEntryParentNavigations { get; set; }
+        public virtual Hierachy HierachyChildNavigation { get; set; }
+        public virtual ICollection<Hierachy> HierachyParentNavigations { get; set; }
     }
 }

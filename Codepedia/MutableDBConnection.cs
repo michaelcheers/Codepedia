@@ -100,6 +100,8 @@ namespace Codepedia
             if (exec is not 1) throw new Exception($"Non-query returned {exec} rows!");
         }
 
+        public int RunAny() => Command.ExecuteNonQuery();
+
         public int RunID()
         {
             int exec = Command.ExecuteNonQuery();

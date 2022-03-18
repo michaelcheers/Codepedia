@@ -6,6 +6,7 @@ using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 #nullable enable
@@ -322,12 +323,19 @@ namespace Codepedia.Pages
             public int? commitID;
             public string entryName, slug, markdown;
         }
+        
+        public class HierachyInfo
+        {
+            public int RootNode;
+            public string[] Folders;
+        }
 
-
-        public async Task<IActionResult> OnPostAsync (int? baseEntryCommitID, int? baseSuggestionCommitID, int? draft, int? reputationAwarded, bool insertingForReals, string entryName, string slug, string markdown, string? message)
+        public async Task<IActionResult> OnPostAsync (int? baseEntryCommitID, int? baseSuggestionCommitID, int? draft, int? reputationAwarded, bool insertingForReals, string entryName, string slug, string? hierachy, string markdown, string? message)
         {
             using MutableDBConnection connection = await MutableDBConnection.Create();
             using MutableDBTransaction trans = await connection.CreateTransaction();
+
+            HierachyInfo[]? hierachyInfo = hierachy == null ? null : hierachy.ToJson<HierachyInfo[]>();
 
             int? baseCommitID = baseSuggestionCommitID ?? baseEntryCommitID;
 
@@ -346,7 +354,7 @@ namespace Codepedia.Pages
                         return NotFound("Tried to update draft but draft does not exist or could not be accessed by the signed in user." +
                             " This may indicate that the draft was already commited.");
 
-                    new CommandCreator(trans, "UPDATE CommitDrafts SET Name=@name, Slug=@slug, Markdown=@markdown, Message=@message, LastUpdated=CURRENT_TIMESTAMP" +
+                    new CommandCreator(trans, "UPDATE CommitDrafts SET Name=@name, Slug=@slug, Markdown=@markdown, Message=@message, LastUpdated=CURRENT_TIMESTAMP, HierachyPosition=@hierachy" +
                         " WHERE ID=@draftID AND Owner=@owner")
                     {
                         ["name"] = entryName,
@@ -354,7 +362,8 @@ namespace Codepedia.Pages
                         ["markdown"] = markdown,
                         ["message"] = message,
                         ["draftID"] = draftID,
-                        ["owner"] = HttpContext.UserID()
+                        ["owner"] = HttpContext.UserID(),
+                        ["hierachy"] = hierachyInfo.ToJson()
                     }.Run0OR1();
                     trans.Commit();
                     return Content("Draft Saved");
@@ -367,15 +376,16 @@ namespace Codepedia.Pages
                     // Maybe I should check that the user has access to the commit they are creating a draft for.
                     // Nevertheless, this is not exactly a security risk.
 
-                    int commitDraftID = new CommandCreator(trans, "INSERT INTO CommitDrafts (Owner, BaseCommitID, Name, Slug, Markdown, Message)" +
-                        " VALUES(@owner, @baseCommit, @name, @slug, @markdown, @message)")
+                    int commitDraftID = new CommandCreator(trans, "INSERT INTO CommitDrafts (Owner, BaseCommitID, Name, Slug, Markdown, Message, HierachyPosition)" +
+                        " VALUES(@owner, @baseCommit, @name, @slug, @markdown, @message, @hierachy)")
                     {
                         ["owner"] = HttpContext.UserID(),
                         ["baseCommit"] = baseCommitID,
                         ["name"] = entryName,
                         ["slug"] = slug,
                         ["markdown"] = markdown,
-                        ["message"] = message
+                        ["message"] = message,
+                        ["hierachy"] = hierachyInfo.ToJson()
                     }.RunID();
                     trans.Commit();
                     return Content($"Draft Saved; ID={commitDraftID}");
@@ -403,6 +413,45 @@ namespace Codepedia.Pages
                 ["message"] = message
             }.RunID();
 
+            void AddEntryToHierachy (int entryID, bool newEntry)
+            {
+                if (hierachyInfo == null) return;
+                if (!newEntry)
+                {
+                    new CommandCreator(trans,
+                        "DELETE Hierachy FROM Hierachy JOIN HierachyEntry ON HierachyEntry.ID=Hierachy.Child WHERE HierachyEntry.EntryID=@entryID;" +
+                        "DELETE FROM HierachyEntry WHERE HierachyEntry.EntryID=@entryID")
+                    {
+                        ["entryID"] = entryID
+                    }.RunAny();
+                }
+                foreach (HierachyInfo hierachyInfo in hierachyInfo)
+                {
+                    int rootNode = hierachyInfo.RootNode;
+                    void AddToHierachy (int childNode)
+                    {
+                        int idx = new CommandCreator(trans, "SELECT MAX(IDX) FROM Hierachy WHERE Parent=@parent") { ["parent"] = rootNode }.Run().Select(row => row.IsDBNull(0) ? 0 : row.GetInt32(0)).Single();
+                        new CommandCreator(trans, "INSERT INTO Hierachy (Parent, Child, IDX) VALUES (@parent, @child, @idx)")
+                        {
+                            ["parent"] = rootNode,
+                            ["child"] = childNode,
+                            ["idx"] = idx + 1
+                        }.Run1();
+                    }
+                    if (hierachyInfo.Folders != null)
+                    {
+                        foreach (string folder in hierachyInfo.Folders)
+                        {
+                            int childNode = new CommandCreator(trans, "INSERT INTO HierachyEntry (Title) VALUES (@title)") { ["title"] = folder }.RunID();
+                            AddToHierachy(childNode);
+                            rootNode = childNode;
+                        }
+                    }
+                    int hEntry = new CommandCreator(trans, "INSERT INTO HierachyEntry (EntryID) VALUES (@entryID)") { ["entryID"] = entryID }.RunID();
+                    AddToHierachy(hEntry);
+                }
+            }
+
             if (baseCommitID is not int baseCommit)
             {
                 if (HttpContext.UserRole() == UserRole.Admin)
@@ -410,6 +459,7 @@ namespace Codepedia.Pages
                     // Creating a new post
 
                     int entryID = new CommandCreator(trans, "INSERT INTO WikiEntries () VALUES ();").RunID();
+                    AddEntryToHierachy(entryID, true);
                     new CommandCreator(
                         trans,
                         "INSERT INTO EntryCommits (EntryID, CommitID, ApprovedBy)" +
@@ -445,15 +495,11 @@ namespace Codepedia.Pages
             {
                 // Making or approving a suggestion or editing a post or suggestion
 
-                int entryID;
+                int entryID = -1;
                 EntryCommit? baseEntryCommit = null;
                 
-                // Find or create the relevant post
-                if (baseEntryCommitID is not int entryCommitID)
-                {
-                    entryID = new CommandCreator(trans, "INSERT INTO WikiEntries () VALUES ();").RunID();
-                }
-                else
+                // Find the relevant post
+                if (baseEntryCommitID is int entryCommitID)
                 {
                     if (DB.EntryCommits.FirstOrDefault(e => e.CommitId == entryCommitID) is not EntryCommit ec)
                         return NotFound($"Entry Commit {entryCommitID} not found.");
@@ -476,6 +522,15 @@ namespace Codepedia.Pages
 
                 if (HttpContext.UserRole() == UserRole.Admin)
                 {
+                    // Create the relevant post
+                    if (entryID == -1)
+                    {
+                        entryID = new CommandCreator(trans, "INSERT INTO WikiEntries () VALUES ();").RunID();
+                        AddEntryToHierachy(entryID, true);
+                    }
+                    else
+                        AddEntryToHierachy(entryID, false);
+
                     // Add the commit to the post.
 
                     try
