@@ -418,12 +418,32 @@ namespace Codepedia.Pages
                 if (hierachyInfo == null) return;
                 if (!newEntry)
                 {
-                    new CommandCreator(trans,
+                    while (new CommandCreator(trans,
                         "DELETE Hierachy FROM Hierachy JOIN HierachyEntry ON HierachyEntry.ID=Hierachy.Child WHERE HierachyEntry.EntryID=@entryID;" +
                         "DELETE FROM HierachyEntry WHERE HierachyEntry.EntryID=@entryID")
                     {
                         ["entryID"] = entryID
-                    }.RunAny();
+                    }.RunAny() > 0);
+
+                    while (true)
+                    {
+                        List<int> emptyFolders = new CommandCreator(trans, "SELECT ID FROM HierachyEntry" +
+                            " WHERE EntryID IS NULL AND NOT EXISTS (" +
+                                "SELECT * FROM Hierachy WHERE Hierachy.Parent=HierachyEntry.ID" +
+                            $") AND ID NOT IN ({string.Join(", ", hierachyInfo.Select(h => h.RootNode))})").Run().Select(row => row.GetInt32(0)).ToList();
+                        if (emptyFolders.Count == 0) break;
+                        foreach (int emptyFolderID in emptyFolders)
+                        {
+                            new CommandCreator(trans, "DELETE FROM Hierachy WHERE Child=@emptyFolderID")
+                            {
+                                ["emptyFolderID"] = emptyFolderID
+                            }.Run0OR1();
+                            new CommandCreator(trans, "DELETE FROM HierachyEntry WHERE ID=@emptyFolderID")
+                            {
+                                ["emptyFolderID"] = emptyFolderID
+                            }.Run1();
+                        }
+                    }
                 }
                 foreach (HierachyInfo hierachyInfo in hierachyInfo)
                 {
