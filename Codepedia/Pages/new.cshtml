@@ -259,6 +259,7 @@ function createSelectElement (options) {
 	let div = document.createElement('div');
 	if (!isFirstSelect)
 	    div.className = 'slash-separated';
+	isFirstSelect = false;
 	let select = div.appendChild(document.createElement('select'));
 	select.appendChild(Object.assign(document.createElement('option'), { innerText: "(root level)", value: "root" }));
 	select.appendChild(Object.assign(document.createElement('option'), { innerText: "(new folder)", value: "new" }));
@@ -279,46 +280,88 @@ function createSelectElement (options) {
 			childrenDiv.appendChild(createSelectElement().div);
 		}
 	});
-	isFirstSelect = false;
 	return { div, select, childrenDiv };
 }
-function exploreTree (nodes, childrenDiv)
+function exploreTree (nodes, parentDiv, initialLoad = false)
 {
 	let relNodes = nodes.filter(childNode => childNode.childNodes?.length > 0);
 	let select = createSelectElement(relNodes);
-	select.select.addEventListener('input', () => {
-		if (select.select.value === 'new') return;
-		select.childrenDiv.innerHTML = '';
+	let inputF = () => {
+		if (select.select.value !== 'new')
+			select.childrenDiv.innerHTML = '';
+		if (select.select.value === 'root' || select.select.value === 'new') {
+			let notThisNodes = nodes.filter(nd => !nd.isSelected);
+			if (notThisNodes.length > 0) {
+				let inputDiv = document.createElement('div');
+				inputDiv.innerHTML = '&nbsp;';
+				let rootSelect = inputDiv.appendChild(document.createElement('select'));
+				for (let n = 0; n <= notThisNodes.length; n++) {
+					let leftNode = notThisNodes[n - 1], rightNode = notThisNodes[n];
+					let innerText;
+					if (leftNode === undefined && rightNode === undefined)
+						innerText = '';
+					if (leftNode === undefined)
+						innerText = `(before ${rightNode.name})`;
+					else if (rightNode === undefined)
+						innerText = `(after ${leftNode.name})`;
+					else
+						innerText = `(between ${leftNode.name} and ${rightNode.name})`;
+					rootSelect.appendChild(Object.assign(document.createElement('option'), { innerText: innerText, value: JSON.stringify({ left: leftNode?.folderID ?? null, right: rightNode?.folderID ?? null }) }));
+				}
+				select.childrenDiv.prepend(inputDiv);
+				return;
+			}
+			else
+				select.select.setAttribute('data-emptyfolder', true);
+		}
 		for (let selectedNode of relNodes.filter(childNode => childNode.folderID == select.select.value))
-			select.childrenDiv.appendChild(createSelectElement(selectedNode.childNodes.filter(childNode => childNode.childNodes?.length > 0)).div);
-	});
-	childrenDiv.appendChild(select.div);
-	for (let selectedNode of relNodes.filter(node => (node.isExpanded || node.isSelected)))
-		exploreTree(selectedNode.childNodes.filter(node => (node.isExpanded || node.isSelected)), select.childrenDiv);
+			exploreTree(selectedNode.childNodes, select.childrenDiv);
+	};
+	select.select.addEventListener('input', inputF);
+	if (initialLoad) {
+	    for (let selectedNode of relNodes.filter(node => (node.isExpanded || node.isSelected)))
+		    exploreTree(selectedNode.childNodes.filter(node => (node.isExpanded || node.isSelected)), select.childrenDiv);
+	}
+	inputF();
+	parentDiv.appendChild(select.div);
 }
-window.addEventListener('load', () => // Line can be removed.
-{
-	exploreTree(topNodes, treeElement);
-}
-); // Line can be removed.
 function onSubmit ()
 {
 	let folders = [];
 	let rootNode = 9;
-	for (let inputORSelect of document.querySelectorAll('#treeElement input, #treeElement select'))
+	let rank = null;
+	let inputsAndSelects = Array.from(document.querySelectorAll('#treeElement input, #treeElement select'));
+	for (let n = 0; n < inputsAndSelects.length; n++)
 	{
+		let inputORSelect = inputsAndSelects[n];
 		if (inputORSelect instanceof HTMLInputElement)
 		{
 			folders.push(inputORSelect.value);
 		}
 		else if (inputORSelect instanceof HTMLSelectElement)
 		{
-			if (inputORSelect.value === 'root' || inputORSelect.value === 'new') continue;
-			if ((+inputORSelect.value).toString() !== inputORSelect.value) throw Error(`Hierachy error: ${inputORSelect.value}`);
-			rootNode = +inputORSelect.value;
+			if (inputORSelect.value === 'new' || inputORSelect.value === 'root')
+			{
+				if (rank !== null) continue;
+				if (inputORSelect.getAttribute('data-emptyfolder') === 'true')
+				{
+					rank = undefined;
+					continue;
+				}
+				n++;
+				let nextSelect = inputsAndSelects[n];
+				if (!(nextSelect instanceof HTMLSelectElement)) throw Error('After root or new folder selected, the next element is not a select element.');
+				rank = JSON.parse(nextSelect.value);
+			}
+			else
+			{
+				if ((+inputORSelect.value).toString() !== inputORSelect.value) throw Error(`Hierachy error: ${inputORSelect.value}`);
+				rootNode = +inputORSelect.value;
+			}
 		}
 	}
-	hierachyInput.value = JSON.stringify([{rootNode, folders}]);
+	rank ??= { left: null, right: null };
+	hierachyInput.value = JSON.stringify( [{rank, rootNode, folders}] );
 }
 </script>
 @{/*
@@ -457,6 +500,11 @@ function onSubmit ()
 </form>
 <script>
 {
+	//window.addEventListener('load', () => // Line can be removed.
+	{
+		exploreTree(topNodes, treeElement, true);
+	}
+	//); // Line can be removed.
 	let timeoutID;
 	function onInput ()
 	{

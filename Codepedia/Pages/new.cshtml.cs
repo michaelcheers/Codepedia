@@ -323,10 +323,20 @@ namespace Codepedia.Pages
             public int? commitID;
             public string entryName, slug, markdown;
         }
+
+        public class RankInfo
+        {
+            public int? Left;
+            public int? Right;
+        }
         
         public class HierachyInfo
         {
             public int RootNode;
+            /// <summary>
+            /// Rank.Left and Rank.Right refer to the IDs of the hierachy entries (folders) inserting between.
+            /// </summary>
+            public RankInfo Rank;
             public string[] Folders;
         }
 
@@ -418,12 +428,12 @@ namespace Codepedia.Pages
                 if (hierachyInfo == null) return;
                 if (!newEntry)
                 {
-                    while (new CommandCreator(trans,
+                    new CommandCreator(trans,
                         "DELETE Hierachy FROM Hierachy JOIN HierachyEntry ON HierachyEntry.ID=Hierachy.Child WHERE HierachyEntry.EntryID=@entryID;" +
                         "DELETE FROM HierachyEntry WHERE HierachyEntry.EntryID=@entryID")
                     {
                         ["entryID"] = entryID
-                    }.RunAny() > 0);
+                    }.RunAny();
 
                     while (true)
                     {
@@ -448,14 +458,65 @@ namespace Codepedia.Pages
                 foreach (HierachyInfo hierachyInfo in hierachyInfo)
                 {
                     int rootNode = hierachyInfo.RootNode;
+                    bool rootAddition = true;
                     void AddToHierachy (int childNode)
                     {
-                        int idx = new CommandCreator(trans, "SELECT MAX(IDX) FROM Hierachy WHERE Parent=@parent") { ["parent"] = rootNode }.Run().Select(row => row.IsDBNull(0) ? 0 : row.GetInt32(0)).Single();
+                        int idx = 1;
+                        if (rootAddition)
+                        {
+                            rootAddition = false;
+                            if (hierachyInfo.Rank.Left != null || hierachyInfo.Rank.Right != null)
+                            {
+                                var idxs = (from h in DB.Hierachies
+                                            where h.Parent == rootNode
+                                            orderby h.Idx ascending
+                                            select new { h.Child, h.Idx }).ToArray();
+                                for (int n = 0; n <= idxs.Length; n++)
+                                {
+                                    var left = n > 0 ? idxs[n - 1] : null;
+                                    var right = n < idxs.Length ? idxs[n] : null;
+                                    if (left?.Child == hierachyInfo.Rank.Left && right?.Child == hierachyInfo.Rank.Right)
+                                    {
+                                        // Reorder the hierachy
+                                        int i = idxs.Max(o => o.Idx) + 1;
+                                        foreach (var idxObj in idxs)
+                                        {
+                                            new CommandCreator(trans, "UPDATE Hierachy SET IDX=@idx WHERE Child=@child")
+                                            {
+                                                ["child"] = idxObj.Child,
+                                                ["idx"] = i
+                                            }.Run0OR1();
+                                            i++;
+                                        }
+                                        i = 1;
+                                        if (left == null)
+                                            i++;
+                                        foreach (var idxObj in idxs)
+                                        {
+                                            new CommandCreator(trans, "UPDATE Hierachy SET IDX=@idx WHERE Child=@child")
+                                            {
+                                                ["child"] = idxObj.Child,
+                                                ["idx"] = i
+                                            }.Run0OR1();
+                                            if (idxObj.Child == left?.Child)
+                                            {
+                                                i++;
+                                                idx = i;
+                                            }
+                                            i++;
+                                        }
+                                        goto End;
+                                    }
+                                }
+                            }
+                            idx = new CommandCreator(trans, "SELECT MAX(IDX) FROM Hierachy WHERE Parent=@parent") { ["parent"] = rootNode }.Run().Select(row => row.IsDBNull(0) ? 0 : row.GetInt32(0)).Single();
+                        }
+                        End:
                         new CommandCreator(trans, "INSERT INTO Hierachy (Parent, Child, IDX) VALUES (@parent, @child, @idx)")
                         {
                             ["parent"] = rootNode,
                             ["child"] = childNode,
-                            ["idx"] = idx + 1
+                            ["idx"] = idx
                         }.Run1();
                     }
                     if (hierachyInfo.Folders != null)
