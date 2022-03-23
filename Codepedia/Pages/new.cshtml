@@ -328,7 +328,7 @@ function exploreTree (nodes, parentDiv, initialLoad = false)
 function onSubmit ()
 {
 	let folders = [];
-	let rootNode = 9;
+	let rootNode = @Functions.RootNode;
 	let rank = null;
 	let inputsAndSelects = Array.from(document.querySelectorAll('#treeElement input, #treeElement select'));
 	for (let n = 0; n < inputsAndSelects.length; n++)

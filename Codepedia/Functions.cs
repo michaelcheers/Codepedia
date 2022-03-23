@@ -15,6 +15,7 @@ namespace Codepedia
 {
     public static class Functions
     {
+        public const int RootNode = 9;
         static MarkdownPipeline CreateMarkdownPipeline (bool colorCode)
         {
             MarkdownPipelineBuilder result = new();
